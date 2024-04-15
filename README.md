@@ -1,3 +1,9 @@
 # JDD4100
-Junior Design Project - BMED Peer Evaluation Application
+Name of Our Product: BMED Peer Evaluation Application
+Project Description: 
 ## Section 0.0.0
+### Features
+
+### Bug Fixes
+
+### Known Issue
