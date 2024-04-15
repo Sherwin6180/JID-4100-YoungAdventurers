@@ -1,10 +1,15 @@
 # JDD4100
-Name of Our Product: BMED Peer Evaluation Application
+Junior Design Project - BMED Peer Evaluation Application
 
-Project Description: We are developing an app to improve the peer evaluation process requested by the BMED department at Georgia Tech. It provides two key functionalities: real-time evaluation and goal-based evaluation.
-## Section 0.0.0
+We are developing an app to improve the peer evaluation process requested by the BMED department at Georgia Tech. It provides two key functionalities: real-time evaluation and goal-based evaluation.
+
+# Release Notes
+## v0.0.0
 ### Features
-
+* Implemented a UI flow from assignment screen to form screen and vice versa.
+* Created a MySQL database and hosted it on AWS RDS.
+* Created a Node.js backend to connect to the database and provide APIs for task retrievement, question retrieviement, and form submission.
 ### Bug Fixes
-
-### Known Issue
+* The status of the task will be updated to "Completed" after the user finishes the form.
+### Known Issues
+* The user currently is not able to save the answers and review them later before submitting.
