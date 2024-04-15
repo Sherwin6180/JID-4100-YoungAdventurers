@@ -36,13 +36,24 @@ app.get('/api/assignments/:assignmentId/tasks', (req, res) => {
   const evaluatorId = req.query.evaluatorId; evaluatorId
 
   const sql = `
-    SELECT t.task_id, p.first_name, p.last_name,
-           IF(ISNULL(r.response_id), 'Incomplete', 'Completed') AS status
-    FROM task t
+    SELECT 
+      t.task_id, 
+      p.first_name, 
+      p.last_name,
+      CASE
+        WHEN COUNT(q.question_id) > 0 AND COUNT(DISTINCT q.question_id) = COUNT(DISTINCT r.question_id) 
+        THEN 'Completed'
+        ELSE 'Incomplete'
+      END AS status
+    FROM 
+      task t
     JOIN person p ON t.presenter_id = p.person_id
+    LEFT JOIN question q ON t.assignment_id = q.assignment_id
     LEFT JOIN response r ON t.task_id = r.task_id AND r.evaluator_id = ?
-    WHERE t.assignment_id = ?
-    GROUP BY t.task_id
+    WHERE 
+      t.assignment_id = ?
+    GROUP BY 
+      t.task_id, p.first_name, p.last_name
   `;
 
   db.query(sql, [evaluatorId, assignmentId], (err, results) => {

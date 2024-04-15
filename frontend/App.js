@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { Alert, View, Text, StyleSheet, FlatList, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import DropdownMenu from './components/DropdownMenu';
 
 const App = () => {
   const [tasks, setTasks] = useState([]);
@@ -7,11 +8,13 @@ const App = () => {
   const [currentScreen, setCurrentScreen] = useState('TasksList'); 
   const [selectedTask, setSelectedTask] = useState(null);
   const [answers, setAnswers] = useState({}); 
+  const [refreshTasks, setRefreshTasks] = useState(false);
+
 
   
   const assignmentId = '1';
   const evaluatorId = '2'
-  const ip_address = '128.61.74.224';
+  const ip_address = '10.0.0.30';
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -27,6 +30,22 @@ const App = () => {
   
     fetchTasks();
   }, []);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch(`http://${ip_address}:3000/api/assignments/${assignmentId}/tasks?evaluatorId=${evaluatorId}`);
+        const data = await response.json();
+        console.log(data); 
+        setTasks(data);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
+    };
+  
+    fetchTasks();
+  }, [refreshTasks]);
+  
   
   
   useEffect(() => {
@@ -51,9 +70,39 @@ const App = () => {
     }
   }, [selectedTask]);
 
+  const TaskDetails = () => {
+    const handleBackPress = () => {
+      Alert.alert(
+        "Warning",
+        "Your response won't be saved. Continue?",
+        [
+          {
+            text: "No",
+            style: "cancel", 
+          },
+          {
+            text: "Yes",
+            onPress: () => setCurrentScreen('TasksList'), 
+          },
+        ],
+        { cancelable: true } 
+      );
+    };
+  
+    return (
+      <TouchableOpacity onPress={handleBackPress}>
+        <Text style={styles.backButtonText}>Back to Tasks</Text>
+      </TouchableOpacity>
+    );
+  };
+
   const renderTaskDetails = () => (
     <ScrollView contentContainerStyle={styles.screen}>
-      <Text style={styles.taskDetailsTitle}>Task Details</Text>
+      <Text style={styles.taskDetailsTitle}>Instructions</Text>
+      <Text>The instructions for the assignment will be written here</Text>
+      <Text style={styles.taskDetailsTitle}>Section 1</Text>
+      <Text style={styles.question}>This student speaks clearly</Text>
+      <DropdownMenu/>
       {questions.map((question) => (
         <View key={question.question_id}>
           <Text style={styles.question}>{question.question_text}</Text>
@@ -68,25 +117,30 @@ const App = () => {
       <TouchableOpacity style={styles.submitButton} onPress={submitAnswers}>
         <Text style={styles.submitButtonText}>Submit Answers</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => setCurrentScreen('TasksList')}>
-        <Text style={styles.detailsButtonText}>Back to Tasks</Text>
-      </TouchableOpacity>
+      {/* <TouchableOpacity onPress={() => setCurrentScreen('TasksList')}>
+        <Text style={styles.backButtonText}>Back to Tasks</Text>
+      </TouchableOpacity> */}
+      <TaskDetails/>
     </ScrollView>
   );
   
-
+  
   const renderTask = ({ item }) => (
     <View style={styles.taskContainer}>
       <Text style={styles.taskTitle}>{`Presenter: ${item.first_name} ${item.last_name}`}</Text>
       <Text style={styles.taskStatus}>{`Status: ${item.status}`}</Text>
-      <TouchableOpacity onPress={() => {
-        setSelectedTask(item); 
-        setCurrentScreen('TaskDetails'); 
-      }}>
-        <Text style={styles.detailsButtonText}>View Details</Text>
-      </TouchableOpacity>
+      {item.status !== 'Completed' && (
+        <TouchableOpacity onPress={() => {
+          setSelectedTask(item); 
+          setCurrentScreen('TaskDetails'); 
+        }}>
+          <Text style={styles.detailsButtonText}>Begin Assignment</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
+  
+  
 
   const submitAnswers = async () => {
     try {
@@ -98,8 +152,8 @@ const App = () => {
           },
           body: JSON.stringify({
             task_id: 1,
-            question_id: 1,
-            evaluator_id: 1, 
+            question_id: questionId,
+            evaluator_id: 2, 
             answer_text: answers[questionId],
           }),
         });
@@ -112,6 +166,7 @@ const App = () => {
       await Promise.all(promises);
       alert('All answers submitted successfully');
       
+      setRefreshTasks(!refreshTasks);
       setCurrentScreen('TasksList');
     } catch (error) {
       console.error('Error submitting answers:', error);
@@ -119,20 +174,25 @@ const App = () => {
     }
   };
   
+  
 
   return (
     <View style={styles.container}>
       {currentScreen === 'TasksList' ? (
-        <FlatList
-          data={tasks}
-          keyExtractor={item => item.task_id.toString()}
-          renderItem={renderTask}
-        />
+        <View>
+          <Text style={styles.assignmentTitle}>Assignments</Text>
+          <FlatList
+            data={tasks}
+            keyExtractor={item => item.task_id.toString()}
+            renderItem={renderTask}
+          />
+        </View>
       ) : (
         renderTaskDetails()
       )}
     </View>
   );
+  
 };
 
 const styles = StyleSheet.create({
@@ -140,12 +200,16 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 50,
     backgroundColor: '#fff',
+    // justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   taskContainer: {
     padding: 20,
     marginHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#cccccc',
+    borderTopWidth: 1,
+    borderTopColor: '#cccccc',
   },
   taskTitle: {
     fontSize: 16,
@@ -161,6 +225,12 @@ const styles = StyleSheet.create({
     color: '#007bff',
     marginTop: 10,
   },
+  backButtonText: {
+    fontSize: 14,
+    color: '#007bff',
+    marginTop: 10,
+    textAlign: 'center',
+  },
   question: {
     fontSize: 16,
     marginTop: 10,
@@ -168,7 +238,14 @@ const styles = StyleSheet.create({
   taskDetailsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  assignmentTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    alignSelf: 'center',
+    marginBottom: 10,
   },
   input: {
     borderWidth: 1,
@@ -178,12 +255,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderRadius: 5,
     width: '100%',
+    textAlign: 'center',
   },
   submitButton: {
     backgroundColor: '#007bff',
     padding: 10,
     borderRadius: 5,
     marginTop: 20,
+    alignSelf: 'center',
   },
   submitButtonText: {
     color: '#ffffff',
