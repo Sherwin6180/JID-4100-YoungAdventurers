@@ -8,19 +8,49 @@ clone repository from github:
 git clone https://github.com/Sherwin6180/JID-4100-YoungAdventurers.git
 ```
 ### Step 2 - Create New Branch
-* Navigate to 4100-YoungAdventurers folder
-* check branches: git branch (there is only a main branch)
-* git checkout branch <branch-name> (this command lead you create a new branch and navigate to that branch)
-* git branch (if create new branch successfully, you will see two branches: *main and *<branch-name>)
+First naavigate to 4100-YoungAdventurers folder
+check branches: 
+```
+git branch
+```
+create a new branch and navigate to that branch
+```
+git checkout branch <branch-name>
+```
+If create new branch successfully, you will see two branches: *main and *<branch-name>
+```
+git branch
+```
 ### Step 3 - Push Your Own Branch To Github Repository
-* git push origin <branch-name>
-* Now go to repository -> Branches -> Active Branches (your branch should be there)
+```
+git push origin <branch-name>
+```
+Now go to repository -> Branches -> Active Branches (your branch should be there)
 ### Step 4 - Fetch updates
 Before you do coding on your own branch, make sure to fetch updates from others
-
+Fetch main branch latest update
+```
+git fetch origin
+```
+Update main branch locally
+```
+git checkout main
+git pull origin main
+```
 ### Step 4 - Update Changes to Repository
-After you make changes locally, following the steps below to update your changes
-
+First make sure you make changes on your own branch. After you make changes locally, following the steps below to update your changes.
+Add all changing files
+```
+git add .
+```
+Add comments to your changes
+```
+git comment -m "YOUR COMMENTS HERE"
+```
+Push to Repository
+```
+git push origin <branch-name>
+```
 # Release Notes
 ## v0.0.0
 ### Features
