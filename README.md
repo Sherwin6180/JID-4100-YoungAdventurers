@@ -14,7 +14,9 @@ We are developing an app to improve the peer evaluation process requested by the
 * Now go to repository -> Branches -> Active Branches (your branch should be there)
 ### Step 4 - Fetch updates
 Before you do coding on your own branch, make sure to fetch updates from others
-* git
+```
+git
+```
 ### Step 4 - Update Changes to Repository
 After you make changes locally, following the steps below to update your changes
 
