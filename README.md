@@ -47,10 +47,18 @@ Add comments to your changes
 ```
 git commit -m "YOUR COMMENTS HERE"
 ```
-Push to Repository
+Push to your branch in the repository
 ```
 git push origin <branch-name>
 ```
+### Step 5 - Create a Pull Request
+* Open repository
+* Navigate to Pull Request -> click your own branch -> Create pull request
+* On the right side, there is a "Reviewer" option. Clik it and choose people to review
+* Write down some comments and click Create pull request
+* Your reviewers should be able to see your pull request
+### Step 6 - Review a Pull Request and Merge
+
 # Release Notes
 ## v0.0.0
 ### Features
