@@ -10,10 +10,14 @@ We are developing an app to improve the peer evaluation process requested by the
 * git checkout branch <branch-name> (this command lead you create a new branch and navigate to that branch)
 * git branch (if create new branch successfully, you will see two branches: *main and *<branch-name>)
 ### Step 3 - Push Your Own Branch To Github Repository
-* git push origin <branch-name>
+'git push origin <branch-name>'
 * Now go to repository -> Branches -> Active Branches (your branch should be there)
+### Step 4 - Fetch updates
+Before you do coding on your own branch, make sure to fetch updates from others
+* git
 ### Step 4 - Update Changes to Repository
-Af
+After you make changes locally, following the steps below to update your changes
+
 # Release Notes
 ## v0.0.0
 ### Features
