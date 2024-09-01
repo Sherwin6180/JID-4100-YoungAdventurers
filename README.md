@@ -2,7 +2,7 @@
 
 We are developing an app to improve the peer evaluation process requested by the BMED department at Georgia Tech. It provides two key functionalities: real-time evaluation and goal-based evaluation.
 # Code Review Steps
-## 
+### Step 1 - Pull From Repository
 # Release Notes
 ## v0.0.0
 ### Features
