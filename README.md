@@ -45,7 +45,7 @@ git add .
 ```
 Add comments to your changes
 ```
-git comment -m "YOUR COMMENTS HERE"
+git commit -m "YOUR COMMENTS HERE"
 ```
 Push to Repository
 ```
