@@ -58,6 +58,11 @@ git push origin <branch-name>
 * Write down some comments and click Create pull request
 * Your reviewers should be able to see your pull request
 ### Step 6 - Review a Pull Request and Merge
+* Navigate to Pull Requests and select the pull request assigned to you
+* Click on the "Files changed" tab
+* Examine all files and click on the "Review changes" button in green on the top right
+* Make appropriate comments and submit
+* Navigate back to the "Conversation" tab and merge the pull request
 
 # Release Notes
 ## v0.0.0
