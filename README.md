@@ -3,7 +3,10 @@
 We are developing an app to improve the peer evaluation process requested by the BMED department at Georgia Tech. It provides two key functionalities: real-time evaluation and goal-based evaluation.
 # Code Review Steps
 ### Step 1 - Pull From Repository
-* clone repository from github: git clone https://github.com/Sherwin6180/JID-4100-YoungAdventurers.git
+clone repository from github: 
+```
+git clone https://github.com/Sherwin6180/JID-4100-YoungAdventurers.git
+```
 ### Step 2 - Create New Branch
 * Navigate to 4100-YoungAdventurers folder
 * check branches: git branch (there is only a main branch)
@@ -14,9 +17,7 @@ We are developing an app to improve the peer evaluation process requested by the
 * Now go to repository -> Branches -> Active Branches (your branch should be there)
 ### Step 4 - Fetch updates
 Before you do coding on your own branch, make sure to fetch updates from others
-```
-git
-```
+
 ### Step 4 - Update Changes to Repository
 After you make changes locally, following the steps below to update your changes
 
