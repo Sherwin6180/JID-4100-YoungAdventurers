@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from './src/screen/Login'; // login screen
 import CreateAccountScreen from './src/screen/CreateAccount'; // Create Account Screen
 import ResetPasswordScreen from './src/screen/ResetPassword'; // Retrieve password screen
+import SecurityQuestionsScreen from './src/screen/setVarifyQuestion'; // set security question screen
 
 const Stack = createNativeStackNavigator();
 
@@ -27,11 +28,21 @@ const App = () => {
           options={{ headerShown: false }} 
         />
 
+        
         {/* Retrieve password screen */}
+        {/*
         <Stack.Screen
           name="ResetPassword"
           component={ResetPasswordScreen}
           options={{ headerShown: false }}  
+        />
+        */}
+
+        {/* Security Questions Screen */}
+        <Stack.Screen
+          name="SecurityQuestions"
+          component={SecurityQuestionsScreen}
+          options={{ headerShown: false }}
         />
 
       </Stack.Navigator>
