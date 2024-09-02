@@ -14,7 +14,7 @@ const CreateAccountScreen = ({ navigation }) => {
       Alert.alert('Error', 'Please fill out all fields.');
     } else {
       Alert.alert('Success', `Account created for ${username}`);
-      navigation.goBack(); // back to login page
+      navigation.navigate('SecurityQuestions'); // move to security question page
     }
   };
 
