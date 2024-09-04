@@ -149,4 +149,7 @@ const styles = StyleSheet.create({
   },
 });
 
+
 export default ResetPasswordScreen;
+
+
