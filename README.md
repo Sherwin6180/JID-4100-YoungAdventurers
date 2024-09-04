@@ -8,19 +8,16 @@ clone repository from github:
 git clone https://github.com/Sherwin6180/JID-4100-YoungAdventurers.git
 ```
 ### Step 2 - Create New Branch
-First naavigate to 4100-YoungAdventurers folder
+First navigate to 4100-YoungAdventurers folder
 check branches: 
 ```
 git branch
 ```
-create a new branch and navigate to that branch
+create a new branch
 ```
-git checkout branch <branch-name>
+git branch <branch-name>
 ```
 If create new branch successfully, you will see two branches: *main and *<branch-name>
-```
-git branch
-```
 ### Step 3 - Push Your Own Branch To Github Repository
 ```
 git push origin <branch-name>
