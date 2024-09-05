@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import config from '../../config';
+const server = config.apiUrl;
 
 const CreateAccountScreen = ({ navigation }) => {
   
@@ -13,8 +15,33 @@ const CreateAccountScreen = ({ navigation }) => {
     if (username === '' || email === '' || password === '') {
       Alert.alert('Error', 'Please fill out all fields.');
     } else {
-      Alert.alert('Success', `Account created for ${username}`);
-      navigation.navigate('SecurityQuestions'); // move to security question page
+      fetch(`${server}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+          accountType,
+        }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message === 'Account created successfully!') {
+          Alert.alert('Success', `Account created for ${username}`);
+          navigation.goBack();
+        } else {
+          Alert.alert('Error', 'Failed to create account.');
+        }
+      })
+      .catch(error => {
+        console.error(error);
+        Alert.alert('Error', 'Failed to create account.');
+      });
+      // Alert.alert('Success', `Account created for ${username}`);
+      // navigation.navigate('SecurityQuestions'); // move to security question page
     }
   };
 
