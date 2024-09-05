@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Alert, View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import config from '../../config';
+
+const server = config.apiUrl;
 
 const LoginScreen = ({ navigation }) => {
 
@@ -13,11 +16,33 @@ const LoginScreen = ({ navigation }) => {
     if (username === '' || password === '') {
       Alert.alert('Error', 'Please enter both username and password.');
     } else {
-      // Authenticate login, currently defaults to success
-      Alert.alert('Success', `Logged in as ${role}: ${username}`);
-      // Clear the input box
-      setUsername('');
-      setPassword('');
+      fetch(`${server}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          password,
+          accountType: role,
+        }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.message.startsWith('Login successful')) {
+          // Authenticate login, currently defaults to success
+          Alert.alert('Success', `Logged in as ${role}: ${username}`);
+          // Clear the input box
+          setUsername('');
+          setPassword('');
+        } else {
+          Alert.alert('Error', 'Failed to login.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        Alert.alert('Error', 'Failed to login.');
+      });
     }
   };
 
