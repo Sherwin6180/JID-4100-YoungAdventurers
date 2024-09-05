@@ -30,13 +30,13 @@ const App = () => {
 
         
         {/* Retrieve password screen */}
-        {/*
+        {
         <Stack.Screen
           name="ResetPassword"
           component={ResetPasswordScreen}
           options={{ headerShown: false }}  
         />
-        */}
+        }
 
         {/* Security Questions Screen */}
         <Stack.Screen

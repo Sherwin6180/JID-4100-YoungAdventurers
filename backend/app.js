@@ -1,110 +1,15 @@
-const mysql = require('mysql');
+// app.js
 const express = require('express');
 const bodyParser = require('body-parser');
+const authRoutes = require('./routes/auth');
 
 const app = express();
-const port = 3000;
 
 app.use(bodyParser.json());
+app.use('/api/auth', authRoutes);
 
-const db = mysql.createConnection({
-  host     : 'database-2.croas0wiukl6.us-east-2.rds.amazonaws.com',
-  port     : '3306',
-  user     : 'admin',
-  password : '12345678'
-});
+const PORT = 3000;
 
-db.connect(err => {
-  if (err) {
-    console.error('Failed to connect to database: ' + err.stack);
-    return;
-  }
-
-  console.log('Successfully connected to database');
-});
-
-db.query('USE evaluation', (err) => {
-  if (err) {
-    console.error('Error selecting database:', err);
-    return;
-  }
-  console.log('Database switched to evaluation');
-});
-
-app.get('/api/assignments/:assignmentId/tasks', (req, res) => {
-  const { assignmentId } = req.params;
-  const evaluatorId = req.query.evaluatorId; evaluatorId
-
-  const sql = `
-    SELECT 
-      t.task_id, 
-      p.first_name, 
-      p.last_name,
-      CASE
-        WHEN COUNT(q.question_id) > 0 AND COUNT(DISTINCT q.question_id) = COUNT(DISTINCT r.question_id) 
-        THEN 'Completed'
-        ELSE 'Incomplete'
-      END AS status
-    FROM 
-      task t
-    JOIN person p ON t.presenter_id = p.person_id
-    LEFT JOIN question q ON t.assignment_id = q.assignment_id
-    LEFT JOIN response r ON t.task_id = r.task_id AND r.evaluator_id = ?
-    WHERE 
-      t.assignment_id = ?
-    GROUP BY 
-      t.task_id, p.first_name, p.last_name
-  `;
-
-  db.query(sql, [evaluatorId, assignmentId], (err, results) => {
-    if (err) {
-      console.error('Error fetching tasks for evaluator:', err);
-      res.status(500).send('An error occurred while fetching tasks.');
-      return;
-    }
-    res.json(results);
-  });
-});
-
-app.get('/api/assignments/:assignmentId/questions', (req, res) => {
-  const { assignmentId } = req.params;
-  
-  const sql = 'SELECT q.question_id, q.question_text FROM question q WHERE q.assignment_id = ?';
-  
-  db.query(sql, [assignmentId], (error, results) => {
-    if (error) {
-      console.error('Error fetching questions:', error);
-      res.status(500).send('An error occurred while fetching questions.');
-      return;
-    }
-    res.json(results);
-  });
-});
-
-app.post('/api/answers', (req, res) => {
-  
-  const { task_id, question_id, evaluator_id, answer_text } = req.body;
-
-  
-  const sql = `
-    INSERT INTO response (task_id, question_id, evaluator_id, answer_text)
-    VALUES (?, ?, ?, ?)
-  `;
-
-  
-  db.query(sql, [task_id, question_id, evaluator_id, answer_text], (error, results) => {
-    if (error) {
-      console.error('Error submitting answer:', error);
-      res.status(500).send('An error occurred while submitting the answer.');
-      return;
-    }
-    
-    res.send('Answer submitted successfully.');
-  });
-});
-
-
-
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
