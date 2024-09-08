@@ -63,7 +63,7 @@ git push origin <branch-name>
 
 # Release Notes
 ## v0.0.0
-### Features
+### New Features
 * Implemented a UI flow from assignment screen to form screen and vice versa.
 * Created a MySQL database and hosted it on AWS RDS.
 * Created a Node.js backend to connect to the database and provide APIs for task retrievement, question retrieviement, and form submission.
@@ -72,7 +72,7 @@ git push origin <branch-name>
 ### Known Issues
 * The user currently is not able to save the answers and review them later before submitting.
 ## v0.1.0
-### Features
+### New Features
 * Implemented the front-end UI for the user creation page.
 * Implemented the front-end UI for the reset password page.
 * Implemented the front-end UI for the user login page.
