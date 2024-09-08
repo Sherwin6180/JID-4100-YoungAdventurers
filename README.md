@@ -71,3 +71,18 @@ git push origin <branch-name>
 * The status of the task will be updated to "Completed" after the user finishes the form.
 ### Known Issues
 * The user currently is not able to save the answers and review them later before submitting.
+## v0.1.0
+### Features
+* Implemented the front-end UI for the user creation page.
+* Implemented the front-end UI for the reset password page.
+* Implemented the front-end UI for the user login page.
+* Implemented the user table schema for database.
+* Implemented RESTful APIs to allow for account creation.
+* Connect user creation, reset password, and login page to the backend database.
+### Bug Fixes
+* Previously passwords were stored in plaintext, now  they are encrypted.
+* Improved password reset logic, allowing users to create unique security questions to ensure security.
+### Known Issues
+* User enters email and password without validating the formatting.
+* No validation of multiple accounts tied to one email address.
+* The situation where the updated password is identical to the original password has not been taken into consideration.
