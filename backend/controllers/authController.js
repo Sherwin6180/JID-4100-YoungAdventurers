@@ -2,17 +2,19 @@ const db = require('../db');
 const bcrypt = require('bcrypt');
 
 exports.register = (req, res) => {
-  const { username, email, password, accountType } = req.body;
-  
-  if (!username || !email || !password || !accountType) {
+  const { username, email, password, accountType, securityQuestion1, securityAnswer1, securityQuestion2, securityAnswer2 } = req.body;
+
+  if (!username || !email || !password || !accountType || !securityQuestion1 || !securityAnswer1 || !securityQuestion2 || !securityAnswer2) {
     return res.status(400).json({ message: 'Please fill out all fields.' });
   }
 
   const hashedPassword = bcrypt.hashSync(password, 10);
+  const hashedAnswer1 = bcrypt.hashSync(securityAnswer1, 10); // hash security answer 1
+  const hashedAnswer2 = bcrypt.hashSync(securityAnswer2, 10); // hash security answer 2
 
   db.query(
-    'INSERT INTO users (username, email, password, accountType) VALUES (?, ?, ?, ?)',
-    [username, email, hashedPassword, accountType],
+    'INSERT INTO users (username, email, password, accountType, securityQuestion1, securityAnswer1, securityQuestion2, securityAnswer2) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [username, email, hashedPassword, accountType, securityQuestion1, hashedAnswer1, securityQuestion2, hashedAnswer2],
     (err, result) => {
       if (err) {
         return res.status(500).json({ message: 'Error creating account', error: err });
