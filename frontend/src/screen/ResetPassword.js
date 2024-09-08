@@ -1,46 +1,113 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import config from '../../config';
+const server = config.apiUrl;
 
 const ResetPasswordScreen = ({ navigation }) => {
+  const [email, setEmail] = useState(''); // Add email state
   const [question1, setQuestion1] = useState('');
   const [question2, setQuestion2] = useState('');
   const [answer1, setAnswer1] = useState('');
   const [answer2, setAnswer2] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [isVerified, setIsVerified] = useState(false); // Track if the answers are verified
+  const [isQuestionsFetched, setIsQuestionsFetched] = useState(false); // Track if security questions are fetched
 
-  // Simulating fetching user security questions and answers from a server or database
-  useEffect(() => {
-    setQuestion1("What is your mother's maiden name?");
-    setQuestion2("What was the name of your first pet?");
-  }, []);
-
-  // Simulated correct answers (in a real application, you'd fetch these from a database)
-  const correctAnswer1 = 'Smith';
-  const correctAnswer2 = 'Fluffy';
-
-  // Reset password button
-  const handleResetPassword = () => {
-    if (answer1 === '' || answer2 === '') {
-      Alert.alert('Error', 'Please answer both questions.');
-    } else if (answer1 !== correctAnswer1 || answer2 !== correctAnswer2) {
-      // If answers don't match
-      Alert.alert('Error', 'Security answers do not match. Reset password failed.');
-    } else {
-      // If answers match, allow user to reset password
-      setIsVerified(true);
-      Alert.alert('Verified', 'Security answers match. Please enter your new password.');
+  // Fetch security questions based on email
+  const fetchSecurityQuestions = () => {
+    if (email === '') {
+      Alert.alert('Error', 'Please enter your email.');
+      return;
     }
+
+    fetch(`${server}/api/auth/getSecurityQuestions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+      }),
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        setQuestion1(data.question1);
+        setQuestion2(data.question2);
+        setIsQuestionsFetched(true);
+      } else {
+        Alert.alert('Error', 'Email not found or invalid.');
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      Alert.alert('Error', 'Failed to fetch security questions.');
+    });
   };
 
-  // Handle the new password reset
+  // Verify security answers
+  const handleVerifyAnswers = () => {
+    if (answer1 === '' || answer2 === '') {
+      Alert.alert('Error', 'Please answer both questions.');
+      return;
+    }
+
+    fetch(`${server}/api/auth/verifySecurityAnswers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        answer1,
+        answer2,
+      }),
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        setIsVerified(true);
+        Alert.alert('Verified', 'Security answers match. Please enter your new password.');
+      } else {
+        Alert.alert('Error', 'Security answers do not match.');
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      Alert.alert('Error', 'Verification failed.');
+    });
+  };
+
+  // Handle password reset
   const handlePasswordReset = () => {
     if (newPassword === '') {
       Alert.alert('Error', 'Please enter a new password.');
-    } else {
-      Alert.alert('Success', 'Password has been reset successfully.');
-      navigation.goBack(); // Navigate back to the login page
+      return;
     }
+
+    fetch(`${server}/api/auth/resetPassword`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        newPassword,
+      }),
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        Alert.alert('Success', 'Password has been reset successfully.');
+        navigation.goBack(); // Navigate back to the login page
+      } else {
+        Alert.alert('Error', 'Failed to reset password.');
+      }
+    })
+    .catch(error => {
+      console.error(error);
+      Alert.alert('Error', 'Failed to reset password.');
+    });
   };
 
   return (
@@ -48,25 +115,47 @@ const ResetPasswordScreen = ({ navigation }) => {
       {/* Reset Password Screen Title */}
       <Text style={styles.title}>Reset Password</Text>
 
-      {/* Security Question 1 */}
-      <Text style={styles.question}>{question1}</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Your Answer"
-        value={answer1}
-        onChangeText={setAnswer1}
-        editable={!isVerified} // Disable editing if verified
-      />
+      {/* Email input box (shown if security questions are not fetched) */}
+      {!isQuestionsFetched && (
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
+          <TouchableOpacity style={styles.button} onPress={fetchSecurityQuestions}>
+            <Text style={styles.buttonText}>Fetch Security Questions</Text>
+          </TouchableOpacity>
+        </>
+      )}
 
-      {/* Security Question 2 */}
-      <Text style={styles.question}>{question2}</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Your Answer"
-        value={answer2}
-        onChangeText={setAnswer2}
-        editable={!isVerified} // Disable editing if verified
-      />
+      {/* Security Questions (shown if questions are fetched) */}
+      {isQuestionsFetched && !isVerified && (
+        <>
+          <Text style={styles.question}>{question1}</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Your Answer"
+            value={answer1}
+            onChangeText={setAnswer1}
+          />
+
+          <Text style={styles.question}>{question2}</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Your Answer"
+            value={answer2}
+            onChangeText={setAnswer2}
+          />
+
+          {/* Verify Answers Button */}
+          <TouchableOpacity style={styles.button} onPress={handleVerifyAnswers}>
+            <Text style={styles.buttonText}>Verify Answers</Text>
+          </TouchableOpacity>
+        </>
+      )}
 
       {/* New Password Input (only show after answers are verified) */}
       {isVerified && (
@@ -79,18 +168,13 @@ const ResetPasswordScreen = ({ navigation }) => {
             secureTextEntry={true}
             onChangeText={setNewPassword}
           />
+
+          {/* Reset Password Button */}
+          <TouchableOpacity style={styles.button} onPress={handlePasswordReset}>
+            <Text style={styles.buttonText}>Reset Password</Text>
+          </TouchableOpacity>
         </>
       )}
-
-      {/* Reset Password Button */}
-      <TouchableOpacity
-        style={styles.button}
-        onPress={isVerified ? handlePasswordReset : handleResetPassword}
-      >
-        <Text style={styles.buttonText}>
-          {isVerified ? 'Reset Password' : 'Verify Answers'}
-        </Text>
-      </TouchableOpacity>
 
       {/* Back Button */}
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -149,7 +233,4 @@ const styles = StyleSheet.create({
   },
 });
 
-
 export default ResetPasswordScreen;
-
-

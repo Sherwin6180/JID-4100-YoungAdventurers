@@ -10,5 +10,9 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   accountType ENUM('student', 'teacher') NOT NULL,
+  securityQuestion1 VARCHAR(255) NOT NULL,
+  securityAnswer1 VARCHAR(255) NOT NULL,
+  securityQuestion2 VARCHAR(255) NOT NULL,
+  securityAnswer2 VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
