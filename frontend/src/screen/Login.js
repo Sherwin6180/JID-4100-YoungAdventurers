@@ -31,7 +31,9 @@ const LoginScreen = ({ navigation }) => {
       .then(data => {
         if (data.message.startsWith('Login successful')) {
           // Authenticate login, currently defaults to success
-          Alert.alert('Success', `Logged in as ${role}: ${username}`);
+          if (role === 'teacher') {
+            navigation.navigate('TeacherDashboard', { username: username }); // 跳转到 TeacherDashboard
+          }
           // Clear the input box
           setUsername('');
           setPassword('');
