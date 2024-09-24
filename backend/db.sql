@@ -1,3 +1,4 @@
+drop database if exists evaluation;
 CREATE DATABASE IF NOT EXISTS evaluation;
 
 USE evaluation;
@@ -15,4 +16,12 @@ CREATE TABLE IF NOT EXISTS users (
   securityQuestion2 VARCHAR(255) NOT NULL,
   securityAnswer2 VARCHAR(255) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+) engine = innodb;
+
+DROP TABLE IF EXISTS courses;
+
+CREATE TABLE courses (
+  courseTitle VARCHAR(255) NOT NULL UNIQUE,
+  courseType ENUM('current', 'previous') NOT NULL,
+  primary key (courseTitle)
+) engine = innodb;
