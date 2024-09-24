@@ -7,6 +7,7 @@ import ResetPasswordScreen from './src/screen/ResetPassword'; // Retrieve passwo
 import SecurityQuestionsScreen from './src/screen/setVarifyQuestion'; // set security question screen
 import TeacherDashboardScreen from './src/screen/TeacherDashboard'; // teacherDashboard screen
 import CourseSectionsScreen from './src/screen/CourseSections'; // course section screen
+import TeacherEditScreen from './src/screen/TeacherEdit';
 
 const Stack = createNativeStackNavigator();
 
@@ -56,6 +57,12 @@ const App = () => {
         <Stack.Screen 
           name="CourseSections" 
           component={CourseSectionsScreen}
+        />
+        
+        {/* Teacher Edit Screen */}
+        <Stack.Screen 
+          name="TeacherEdit" 
+          component={TeacherEditScreen}
         />
 
       </Stack.Navigator>
