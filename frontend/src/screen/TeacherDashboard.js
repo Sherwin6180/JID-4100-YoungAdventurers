@@ -94,6 +94,13 @@ const TeacherDashboard = () => {
               </TouchableOpacity>
             ))}
           </View>
+          {/* "Add Courses" 按钮 */}
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate('TeacherEdit')}  // 跳转到课程创建页面 
+          >
+            <Text style={styles.addButtonText}>Add Courses</Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -165,6 +172,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+  },
+  addButton: {
+    padding: 15,
+    backgroundColor: '#B3A369',
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
