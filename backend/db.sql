@@ -25,3 +25,13 @@ CREATE TABLE courses (
   courseType ENUM('current', 'previous') NOT NULL,
   primary key (courseTitle)
 ) engine = innodb;
+
+DROP TABLE IF EXISTS sections;
+
+CREATE TABLE sections (
+  sectionTitle VARCHAR(255) NOT NULL,
+  sectionDescription VARCHAR(255) NOT NULL,
+  courseConnect VARCHAR(255) NOT NULL,
+  primary key (sectionTitle, courseConnect),
+  constraint fk1 foreign key (courseConnect) references courses (courseTitle)
+) engine = innodb;
