@@ -101,6 +101,15 @@ const TeacherDashboard = () => {
           >
             <Text style={styles.addButtonText}>Add Courses</Text>
           </TouchableOpacity>
+          {/* 添加导航到TeacherRosterEdit页面的按钮 */}
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate('TeacherRoster')}
+          >
+            <Text style={styles.addButtonText}>Student Roster</Text>
+          </TouchableOpacity>
+          
+
         </ScrollView>
       </View>
     </SafeAreaView>

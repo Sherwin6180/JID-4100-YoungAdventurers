@@ -1312,10 +1312,10 @@
     node-forge "^1.2.1"
     nullthrows "^1.1.1"
 
-"@expo/config-plugins@~8.0.8", "@expo/config-plugins@8.0.8":
-  version "8.0.8"
-  resolved "https://registry.npmjs.org/@expo/config-plugins/-/config-plugins-8.0.8.tgz"
-  integrity sha512-Fvu6IO13EUw0R9WeqxUO37FkM62YJBNcZb9DyJAOgMz7Ez/vaKQGEjKt9cwT+Q6uirtCATMgaq6VWAW7YW8xXw==
+"@expo/config-plugins@~8.0.8", "@expo/config-plugins@8.0.9":
+  version "8.0.9"
+  resolved "https://registry.npmjs.org/@expo/config-plugins/-/config-plugins-8.0.9.tgz"
+  integrity sha512-dNCG45C7BbDPV9MdWvCbsFtJtVn4w/TJbb5b7Yr6FA8HYIlaaVM0wqUMzTPmGj54iYXw8X/Vge8uCPxg7RWgeA==
   dependencies:
     "@expo/config-types" "^51.0.0-unreleased"
     "@expo/json-file" "~8.3.0"
@@ -1515,10 +1515,12 @@
   dependencies:
     cross-spawn "^7.0.3"
 
-"@expo/vector-icons@^14.0.0":
-  version "14.0.0"
-  resolved "https://registry.npmjs.org/@expo/vector-icons/-/vector-icons-14.0.0.tgz"
-  integrity sha512-5orm59pdnBQlovhU9k4DbjMUZBHNlku7IRgFY56f7pcaaCnXq9yaLJoOQl9sMwNdFzf4gnkTyHmR5uN10mI9rA==
+"@expo/vector-icons@^14.0.3":
+  version "14.0.3"
+  resolved "https://registry.npmjs.org/@expo/vector-icons/-/vector-icons-14.0.3.tgz"
+  integrity sha512-UJAKOXPPi6ez/1QZfoFVopCH3+c12Sw+T+IIVkvONCEN7zjN1fLxxWHkZ7Spz4WO5EH2ObtaJfCe/k4rw+ftxA==
+  dependencies:
+    prop-types "^15.8.1"
 
 "@expo/xcpretty@^4.3.0":
   version "4.3.1"
@@ -1850,6 +1852,11 @@
     graceful-fs "^4.1.3"
     prompts "^2.4.2"
     semver "^7.5.2"
+
+"@react-native-picker/picker@^2.7.5":
+  version "2.7.5"
+  resolved "https://registry.npmjs.org/@react-native-picker/picker/-/picker-2.7.5.tgz"
+  integrity sha512-vhMaOLkXSUb+YKVbukMJToU4g+89VMhBG2U9+cLYF8X8HtFRidrHjohGqT8/OyesDuKIXeLIP+UFYI9Q9CRA9Q==
 
 "@react-native/assets-registry@0.74.87":
   version "0.74.87"
@@ -3538,17 +3545,17 @@ expo-status-bar@~1.12.1:
   resolved "https://registry.npmjs.org/expo-status-bar/-/expo-status-bar-1.12.1.tgz"
   integrity sha512-/t3xdbS8KB0prj5KG5w7z+wZPFlPtkgs95BsmrP/E7Q0xHXTcDcQ6Cu2FkFuRM+PKTb17cJDnLkawyS5vDLxMA==
 
-expo@*, expo@^51.0.32:
-  version "51.0.32"
-  resolved "https://registry.npmjs.org/expo/-/expo-51.0.32.tgz"
-  integrity sha512-6GEhYvHRnyS/6BytQagGkClsaqbuwAtlN3A6oDfnNMRKLmz6NE/r+Rjg9zbQgUO6zigqb60Yj5lAX32DmixRDw==
+expo@*, expo@~51.0.34:
+  version "51.0.34"
+  resolved "https://registry.npmjs.org/expo/-/expo-51.0.34.tgz"
+  integrity sha512-l2oi+hIj/ph3qGcvM54Nyd2uF3Zq5caVmSg7AXfBUgtvcdv5Pj1EI/2xCXP9tfMNQo351CWyOwBkTGjv+GdrLg==
   dependencies:
     "@babel/runtime" "^7.20.0"
     "@expo/cli" "0.18.29"
     "@expo/config" "9.0.3"
-    "@expo/config-plugins" "8.0.8"
+    "@expo/config-plugins" "8.0.9"
     "@expo/metro-config" "0.18.11"
-    "@expo/vector-icons" "^14.0.0"
+    "@expo/vector-icons" "^14.0.3"
     babel-preset-expo "~11.0.14"
     expo-asset "~10.0.10"
     expo-file-system "~17.0.1"
@@ -5783,7 +5790,7 @@ prompts@^2.3.2, prompts@^2.4.2:
     kleur "^3.0.3"
     sisteransi "^1.0.5"
 
-prop-types@*, prop-types@^15.5.10, prop-types@^15.7.2:
+prop-types@*, prop-types@^15.5.10, prop-types@^15.7.2, prop-types@^15.8.1:
   version "15.8.1"
   resolved "https://registry.npmjs.org/prop-types/-/prop-types-15.8.1.tgz"
   integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
