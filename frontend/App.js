@@ -8,6 +8,8 @@ import SecurityQuestionsScreen from './src/screen/setVarifyQuestion'; // set sec
 import TeacherDashboardScreen from './src/screen/TeacherDashboard'; // teacherDashboard screen
 import CourseSectionsScreen from './src/screen/CourseSections'; // course section screen
 import TeacherEditScreen from './src/screen/TeacherEdit';
+import TeacherRosterScreen from './src/screen/TeacherRoster';
+import SectionDetailScreen from './src/screen/SectionDetails';
 
 const Stack = createNativeStackNavigator();
 
@@ -65,6 +67,17 @@ const App = () => {
           component={TeacherEditScreen}
         />
 
+        {/* Teacher Roster Screen*/}
+        <Stack.Screen 
+          name="TeacherRoster" 
+          component={TeacherRosterScreen}
+        />
+        
+        {/* Section Detail Screen*/}
+        <Stack.Screen 
+          name="SectionDetail" 
+          component={SectionDetailScreen} 
+        /> 
       </Stack.Navigator>
     </NavigationContainer>
   );
