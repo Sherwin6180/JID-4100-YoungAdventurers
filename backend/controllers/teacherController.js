@@ -1,7 +1,7 @@
 const db = require('../db');
 
 // Create or update a course and add new teachings
-exports.createCourse = (req, res) => {
+exports.teachNewCourse = (req, res) => {
   const { courseID, courseTitle, courseDescription, courseType, teacherUsername, semester, sections } = req.body;
 
   // Validate input
@@ -9,7 +9,7 @@ exports.createCourse = (req, res) => {
     return res.status(400).json({ message: 'Course ID, title, description, type, teacher, semester, and sections are required.' });
   }
 
-  console.log(`courseID: ${courseID}, courseTitle: ${courseTitle}, courseDescription: ${courseDescription}`);
+  // console.log(`${courseID}, ${courseTitle}, ${courseDescription}, ${courseType}, ${teacherUsername}, ${semester}, ${sections}`);
 
   // Check if the teacher exists
   db.query('SELECT * FROM users WHERE username = ? AND accountType = "teacher"', [teacherUsername], (err, results) => {
@@ -45,6 +45,7 @@ exports.createCourse = (req, res) => {
               (err) => {
                 if (err) {
                   db.query('ROLLBACK', () => {}); // Rollback transaction
+                  console.log(err);
                   return res.status(500).json({ message: 'Error creating course', error: err });
                 }
                 insertSectionsAndTeachings(req, res, courseID, semester, sections, teacherUsername);
@@ -145,6 +146,34 @@ const insertTeaching = (req, res, teacherUsername, courseID, sectionID, semester
           });
         }
       }
+    }
+  );
+};
+
+
+exports.getCoursesByTeacher = (req, res) => {
+  const { teacherUsername } = req.params;
+
+  if (!teacherUsername) {
+    return res.status(400).json({ message: 'Teacher username is required.' });
+  }
+
+  db.query(
+    `SELECT DISTINCT c.courseID, c.courseTitle, c.courseDescription, c.courseType, c.semester 
+     FROM courses c
+     JOIN teachings t ON c.courseID = t.courseID AND c.semester = t.semester
+     WHERE t.teacherUsername = ?`,
+    [teacherUsername],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ message: 'Database error', error: err });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ message: 'No courses found for this teacher.' });
+      }
+
+      res.status(200).json({ courses: results });
     }
   );
 };

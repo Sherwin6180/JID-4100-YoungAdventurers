@@ -23,7 +23,6 @@ CREATE TABLE courses (
   courseTitle VARCHAR(255) NOT NULL,
   courseDescription TEXT NOT NULL, 
   courseType ENUM('current', 'previous') NOT NULL,
-  teacherUsername VARCHAR(255) NOT NULL,
   semester ENUM('Spring 2024', 'Summer 2024', 'Fall 2024', 
                 'Spring 2025', 'Summer 2025', 'Fall 2025',
                 'Spring 2026', 'Summer 2026', 'Fall 2026',
@@ -32,8 +31,7 @@ CREATE TABLE courses (
                 'Spring 2029', 'Summer 2029', 'Fall 2029',
                 'Spring 2030', 'Summer 2030', 'Fall 2030') NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (courseID, semester),
-  FOREIGN KEY (teacherUsername) REFERENCES users (username)
+  PRIMARY KEY (courseID, semester)
 ) ENGINE = innodb;
 
 DROP TABLE IF EXISTS sections;
