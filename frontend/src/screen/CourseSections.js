@@ -1,23 +1,47 @@
-import React, { useState } from 'react';
-import { SafeAreaView, StatusBar, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { SafeAreaView, StatusBar, View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons'; // 使用 MaterialIcons 图标
+import config from '../../config';
+import { UserContext } from '../../UserContext';
+const server = config.apiUrl;
 
 const ViewSections = ({ route }) => {
   const navigation = useNavigation();
+  
+  // 从 UserContext 获取 courseID 和 semester
+  const { courseID, semester } = useContext(UserContext);
+  const { setSectionID } = useContext(UserContext);
 
   // 从路由参数获取课程名称
   const { courseTitle } = route.params;
 
-  // 假设通过 API 获取的 section 数据 (示例数据)
-  const [sections] = useState([
-    { id: 1, title: 'Section 1: Introduction', description: 'Overview of basic concepts' },
-    { id: 2, title: 'Section 2: Advanced Topics', description: 'Deep dive into advanced areas' },
-    { id: 3, title: 'Section 3: Practical Applications', description: 'Real-world use cases and projects' },
-  ]);
+  // State to hold fetched sections
+  const [sections, setSections] = useState([]);
+
+  // API 获取 section 信息
+  useEffect(() => {
+    const fetchSections = async () => {
+      try {
+        const response = await fetch(`${server}/api/class/getSectionsByCourse/${courseID}/${semester}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setSections(data.sections);
+        } else {
+          Alert.alert('Error', data.message || 'Failed to fetch sections');
+        }
+      } catch (error) {
+        Alert.alert('Error', 'An error occurred while fetching sections.');
+      }
+    };
+
+    fetchSections(); // 调用 API 获取 section 信息
+  }, [courseID, semester]);
 
   // 点击某个 section 后跳转到 section 详情页面
   const handleSectionClick = (id) => {
+    setSectionID(id);
     navigation.navigate('SectionDetail', { sectionId: id });
   };
 
@@ -75,12 +99,12 @@ const ViewSections = ({ route }) => {
           <View style={styles.sectionContainer}>
             {sections.map((section) => (
               <TouchableOpacity
-                key={section.id}
+                key={section.sectionID}
                 style={styles.sectionCard}
-                onPress={() => handleSectionClick(section.id)}
+                onPress={() => handleSectionClick(section.sectionID)}
               >
-                <Text style={styles.sectionTitle}>{section.title}</Text>
-                <Text style={styles.sectionDescription}>{section.description}</Text>
+                <Text style={styles.sectionTitle}>{section.sectionID}</Text>
+                <Text style={styles.sectionDescription}>{section.sectionDescription}</Text>
               </TouchableOpacity>
             ))}
           </View>

@@ -1,12 +1,40 @@
-import React from 'react';
-import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useContext, useEffect, useState } from 'react';
+import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons'; 
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import { UserContext } from '../../UserContext';
+import config from '../../config';
+
+const server = config.apiUrl;
 
 const SectionDetail = () => {
   const navigation = useNavigation();
-  const route = useRoute();
-  const { courseId, sectionId } = route.params;  // 获取传递过来的课程和章节ID
+  const { courseID, semester, sectionID } = useContext(UserContext);  // 从 UserContext 获取 courseID, semester, sectionID
+  const [courseDescription, setCourseDescription] = useState('');
+  const [sectionDescription, setSectionDescription] = useState('');
+
+  // 使用 useEffect 在组件加载时获取课程和章节描述
+  useEffect(() => {
+    fetchSectionDetails();
+  }, []);
+
+  // 通过 API 获取课程和章节描述
+  const fetchSectionDetails = async () => {
+    try {
+      const response = await fetch(`${server}/api/class/getSectionDetails/${courseID}/${semester}/${sectionID}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setCourseDescription(data.courseDescription);
+        setSectionDescription(data.sectionDescription);
+      } else {
+        Alert.alert('Error', data.message || 'Failed to fetch section details');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'An error occurred while fetching section details.');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>  
@@ -33,7 +61,7 @@ const SectionDetail = () => {
             {/* 图标 3: 人员管理 */}
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => navigation.navigate('TeacherRoster', { courseId, sectionId })}  // 点击跳转到 TeacherRosterEdit 页面，并传递参数
+              onPress={() => navigation.navigate('TeacherRoster', { courseID, sectionID })}  // 点击跳转到 TeacherRoster 页面，并传递参数
             >
               <MaterialIcons name="person" size={30} color="black" />
             </TouchableOpacity>
@@ -42,9 +70,15 @@ const SectionDetail = () => {
 
         {/* 章节详情内容 */}
         <View style={styles.content}>
-          <Text style={styles.title}>Course ID: {courseId}</Text>
-          <Text style={styles.subtitle}>Section ID: {sectionId}</Text>
-          <Text style={styles.description}>This is the Section Detail Page.</Text>
+          <Text style={styles.title}>Course ID: {courseID}</Text>
+          <Text style={styles.subtitle}>Section ID: {sectionID}</Text>
+          <Text style={styles.subtitle}>Semester: {semester}</Text>
+
+          <Text style={styles.sectionHeader}>Course Description</Text>
+          <Text style={styles.description}>{courseDescription}</Text>
+
+          <Text style={styles.sectionHeader}>Section Description</Text>
+          <Text style={styles.description}>{sectionDescription}</Text>
         </View>
       </View>
     </SafeAreaView>
@@ -90,8 +124,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginBottom: 10,
   },
+  sectionHeader: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
+  },
   description: {
     fontSize: 16,
+    color: '#666',
   },
 });
 

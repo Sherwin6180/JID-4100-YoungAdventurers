@@ -11,6 +11,7 @@ const TeacherDashboard = () => {
   const isFocused = useIsFocused();
   const navigation = useNavigation();
   const { username } = useContext(UserContext);
+  const { setCourseID, setSemester } = useContext(UserContext);
 
   // 当前课程列表和之前课程列表的状态
   const [currentCourses, setCurrentCourses] = useState([]);
@@ -44,7 +45,9 @@ const TeacherDashboard = () => {
  
 
   // 点击后跳转到课程详情页面，传递课程 ID 和课程标题作为参数
-  const handleCourseClick = (id, title) => {
+  const handleCourseClick = (id, title, semester) => {
+    setCourseID(id);
+    setSemester(semester);
     navigation.navigate('CourseSections', { courseId: id, courseTitle: title }); // 传递 courseId 和 courseTitle
   };
 
@@ -99,7 +102,7 @@ const TeacherDashboard = () => {
               <TouchableOpacity
                 key={course.courseID}
                 style={styles.courseCard}
-                onPress={() => handleCourseClick(course.courseID, course.courseTitle)} // 点击时传递课程 ID 和标题
+                onPress={() => handleCourseClick(course.courseID, course.courseTitle, course.semester)} // 点击时传递课程 ID 和标题
               >
                 <Text style={styles.courseTitle}>{course.courseTitle}</Text>
               </TouchableOpacity>
@@ -113,7 +116,7 @@ const TeacherDashboard = () => {
               <TouchableOpacity
                 key={course.courseID}
                 style={styles.courseCard}
-                onPress={() => handleCourseClick(course.courseID, course.courseTitle)} // 点击时传递课程 ID 和标题
+                onPress={() => handleCourseClick(course.courseID, course.courseTitle, course.semester)} // 点击时传递课程 ID 和标题
               >
                 <Text style={styles.courseTitle}>{course.courseID}</Text>
               </TouchableOpacity>
