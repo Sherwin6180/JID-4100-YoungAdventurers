@@ -10,75 +10,79 @@ import CourseSectionsScreen from './src/screen/CourseSections'; // course sectio
 import TeacherEditScreen from './src/screen/TeacherEdit';
 import TeacherRosterScreen from './src/screen/TeacherRoster';
 import SectionDetailScreen from './src/screen/SectionDetails';
+import { UserContext, UserProvider } from './UserContext';
 
 const Stack = createNativeStackNavigator();
 
 const App = () => {
   return (
     <NavigationContainer>
-      {/* Initial screen: Login */}
-      <Stack.Navigator 
-        initialRouteName="Login"
-        screenOptions={{
-          animation: 'none',  // 禁用页面跳转动画
-          headerShown: false  // 不显示顶部导航栏
-        }}
-      >
+      <UserProvider>
 
-        {/* login screen */}
-        <Stack.Screen 
-          name="Login" 
-          component={LoginScreen} 
-        />
+        {/* Initial screen: Login */}
+        <Stack.Navigator 
+          initialRouteName="Login"
+          screenOptions={{
+            animation: 'none',  // 禁用页面跳转动画
+            headerShown: false  // 不显示顶部导航栏
+          }}
+        >
 
-        {/* Create Account Screen */}
-        <Stack.Screen 
-          name="CreateAccount"
-          component={CreateAccountScreen}
-        />
+          {/* login screen */}
+          <Stack.Screen 
+            name="Login" 
+            component={LoginScreen} 
+          />
 
-        {/* Retrieve password screen */}
-        <Stack.Screen
-          name="ResetPassword"
-          component={ResetPasswordScreen}
-        />
+          {/* Create Account Screen */}
+          <Stack.Screen 
+            name="CreateAccount"
+            component={CreateAccountScreen}
+          />
 
-        {/* Security Questions Screen */}
-        <Stack.Screen
-          name="SecurityQuestions"
-          component={SecurityQuestionsScreen}
-        />
+          {/* Retrieve password screen */}
+          <Stack.Screen
+            name="ResetPassword"
+            component={ResetPasswordScreen}
+          />
 
-        {/* Teacher user Dashboard screen */}
-        <Stack.Screen
-          name="TeacherDashboard"
-          component={TeacherDashboardScreen}
-        />
+          {/* Security Questions Screen */}
+          <Stack.Screen
+            name="SecurityQuestions"
+            component={SecurityQuestionsScreen}
+          />
 
-        {/* Course Sections screen */}
-        <Stack.Screen 
-          name="CourseSections" 
-          component={CourseSectionsScreen}
-        />
-        
-        {/* Teacher Edit Screen */}
-        <Stack.Screen 
-          name="TeacherEdit" 
-          component={TeacherEditScreen}
-        />
+          {/* Teacher user Dashboard screen */}
+          <Stack.Screen
+            name="TeacherDashboard"
+            component={TeacherDashboardScreen}
+          />
 
-        {/* Teacher Roster Screen*/}
-        <Stack.Screen 
-          name="TeacherRoster" 
-          component={TeacherRosterScreen}
-        />
-        
-        {/* Section Detail Screen*/}
-        <Stack.Screen 
-          name="SectionDetail" 
-          component={SectionDetailScreen} 
-        /> 
-      </Stack.Navigator>
+          {/* Course Sections screen */}
+          <Stack.Screen 
+            name="CourseSections" 
+            component={CourseSectionsScreen}
+          />
+          
+          {/* Teacher Edit Screen */}
+          <Stack.Screen 
+            name="TeacherEdit" 
+            component={TeacherEditScreen}
+          />
+
+          {/* Teacher Roster Screen*/}
+          <Stack.Screen 
+            name="TeacherRoster" 
+            component={TeacherRosterScreen}
+          />
+          
+          {/* Section Detail Screen*/}
+          <Stack.Screen 
+            name="SectionDetail" 
+            component={SectionDetailScreen} 
+          /> 
+        </Stack.Navigator>
+      </UserProvider>
     </NavigationContainer>
   );
 };
