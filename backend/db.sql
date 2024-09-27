@@ -21,17 +21,37 @@ CREATE TABLE IF NOT EXISTS users (
 DROP TABLE IF EXISTS courses;
 
 CREATE TABLE courses (
-  courseTitle VARCHAR(255) NOT NULL UNIQUE,
+  courseID VARCHAR(255) NOT NULL,
+  courseTitle VARCHAR(255) NOT NULL,
+  courseDescription TEXT NOT NULL, 
   courseType ENUM('current', 'previous') NOT NULL,
-  primary key (courseTitle)
-) engine = innodb;
+  teacherUsername VARCHAR(255) NOT NULL,
+  semester ENUM('Spring 2024', 'Summer 2024', 'Fall 2024', 
+                'Spring 2025', 'Summer 2025', 'Fall 2025',
+                'Spring 2026', 'Summer 2026', 'Fall 2026',
+                'Spring 2027', 'Summer 2027', 'Fall 2027',
+                'Spring 2028', 'Summer 2028', 'Fall 2028',
+                'Spring 2029', 'Summer 2029', 'Fall 2029',
+                'Spring 2030', 'Summer 2030', 'Fall 2030') NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (courseID, semester),
+  FOREIGN KEY (teacherUsername) REFERENCES users (username)
+) ENGINE = innodb;
 
 DROP TABLE IF EXISTS sections;
 
 CREATE TABLE sections (
-  sectionTitle VARCHAR(255) NOT NULL,
-  sectionDescription VARCHAR(255) NOT NULL,
-  courseConnect VARCHAR(255) NOT NULL,
-  primary key (sectionTitle, courseConnect),
-  constraint fk1 foreign key (courseConnect) references courses (courseTitle)
-) engine = innodb;
+  sectionID VARCHAR(255) NOT NULL,
+  sectionDescription TEXT NOT NULL,
+  courseID VARCHAR(255) NOT NULL,
+  semester ENUM('Spring 2024', 'Summer 2024', 'Fall 2024', 
+                'Spring 2025', 'Summer 2025', 'Fall 2025',
+                'Spring 2026', 'Summer 2026', 'Fall 2026',
+                'Spring 2027', 'Summer 2027', 'Fall 2027',
+                'Spring 2028', 'Summer 2028', 'Fall 2028',
+                'Spring 2029', 'Summer 2029', 'Fall 2029',
+                'Spring 2030', 'Summer 2030', 'Fall 2030') NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (courseID, sectionID, semester),
+  FOREIGN KEY (courseID, semester) REFERENCES courses (courseID, semester)
+) ENGINE = innodb;

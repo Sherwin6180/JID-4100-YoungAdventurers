@@ -1,44 +1,88 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { SafeAreaView, StatusBar, View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons'; // 使用 MaterialIcons 图标
+import { Picker } from '@react-native-picker/picker'; // 使用 Picker 组件来选择学期
+import { UserContext } from '../../UserContext';
+import config from '../../config';
+
+const server = config.apiUrl;
 
 const TeacherEditScreen = () => {
   const navigation = useNavigation();
+  
+  const { username } = useContext(UserContext);  // Access username from UserContext
 
   // 状态管理
   const [courseTitle, setCourseTitle] = useState('');  // 课程标题
+  const [courseID, setCourseID] = useState(''); // 课程ID
+  const [courseDescription, setCourseDescription] = useState(''); // 课程描述
+  const [semester, setSemester] = useState('Spring 2024'); // 学期，默认设置为Spring 2024
   const [sections, setSections] = useState([]);  // 章节列表
-  const [sectionTitle, setSectionTitle] = useState('');  // 当前章节标题
+  const [sectionID, setsectionID] = useState('');  // 当前章节ID
   const [sectionDescription, setSectionDescription] = useState('');  // 当前章节描述
 
   // 添加章节
   const addSection = () => {
-    if (sectionTitle.trim() === '' || sectionDescription.trim() === '') {
+    if (sectionID.trim() === '' || sectionDescription.trim() === '') {
       Alert.alert('Error', 'Please fill out both section title and description.');
       return;
     }
 
     const newSection = {
       id: sections.length + 1,  // 简单的 ID 生成
-      title: sectionTitle,
+      title: sectionID,
       description: sectionDescription,
     };
     setSections([...sections, newSection]);
-    setSectionTitle('');  // 清空输入框
+    setsectionID('');  // 清空输入框
     setSectionDescription('');
   };
 
   // 创建课程
-  const createCourse = () => {
-    if (courseTitle.trim() === '' || sections.length === 0) {
-      Alert.alert('Error', 'Please provide a course title and at least one section.');
+  const createCourse = async () => {
+    if (courseTitle.trim() === '' || courseID.trim() === '' || courseDescription.trim() === '' || sections.length === 0) {
+      Alert.alert('Error', 'Please fill all course fields and at least one section.');
       return;
     }
-    Alert.alert('Success', 'Course created successfully!');
-    navigation.goBack();
+    const courseType = "current";
+  
+    // Prepare the data to be sent to the API
+    const courseData = {
+      courseID,
+      courseTitle,
+      courseDescription,
+      courseType,
+      semester,
+      teacherUsername: username,
+      sections: sections.map(section => ({
+        sectionID: section.title,
+        sectionDescription: section.description
+      }))
+    };
+  
+    try {
+      // Make the API request
+      const response = await fetch(`${server}/api/course/createCourse`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(courseData),
+      });
+  
+      if (response.ok) {
+        Alert.alert('Success', 'Course created successfully!');
+        navigation.goBack(); // Navigate back after success
+      } else {
+        const errorData = await response.json();
+        Alert.alert('Error', errorData.message || 'Failed to create the course.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while creating the course.');
+    }
   };
-
+  
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" hidden={true} />
@@ -88,18 +132,63 @@ const TeacherEditScreen = () => {
 
           <TextInput
             style={styles.input}
+            placeholder="Course ID"
+            value={courseID}
+            onChangeText={setCourseID}
+          />
+
+          <TextInput
+            style={styles.input}
             placeholder="Course Title"
             value={courseTitle}
             onChangeText={setCourseTitle}
           />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Course Description"
+            value={courseDescription}
+            onChangeText={setCourseDescription}
+          />
+
+          {/* 添加学期选择器 */}
+          <Text style={styles.subTitle}>Select Semester</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={semester}
+              onValueChange={(itemValue) => setSemester(itemValue)}
+            >
+              <Picker.Item label="Spring 2024" value="Spring 2024" />
+              <Picker.Item label="Summer 2024" value="Summer 2024" />
+              <Picker.Item label="Fall 2024" value="Fall 2024" />
+              <Picker.Item label="Spring 2025" value="Spring 2025" />
+              <Picker.Item label="Summer 2025" value="Summer 2025" />
+              <Picker.Item label="Fall 2025" value="Fall 2025" />
+              <Picker.Item label="Spring 2026" value="Spring 2026" />
+              <Picker.Item label="Summer 2026" value="Summer 2026" />
+              <Picker.Item label="Fall 2026" value="Fall 2026" />
+              <Picker.Item label="Spring 2027" value="Spring 2027" />
+              <Picker.Item label="Summer 2027" value="Summer 2027" />
+              <Picker.Item label="Fall 2027" value="Fall 2027" />
+              <Picker.Item label="Spring 2028" value="Spring 2028" />
+              <Picker.Item label="Summer 2028" value="Summer 2028" />
+              <Picker.Item label="Fall 2028" value="Fall 2028" />
+              <Picker.Item label="Spring 2029" value="Spring 2029" />
+              <Picker.Item label="Summer 2029" value="Summer 2029" />
+              <Picker.Item label="Fall 2029" value="Fall 2029" />
+              <Picker.Item label="Spring 2030" value="Spring 2030" />
+              <Picker.Item label="Summer 2030" value="Summer 2030" />
+              <Picker.Item label="Fall 2030" value="Fall 2030" />
+            </Picker>
+          </View>
 
           {/* 添加章节部分 */}
           <Text style={styles.subTitle}>Add Sections</Text>
           <TextInput
             style={styles.input}
             placeholder="Section Title"
-            value={sectionTitle}
-            onChangeText={setSectionTitle}
+            value={sectionID}
+            onChangeText={setsectionID}
           />
           <TextInput
             style={styles.input}
@@ -115,10 +204,10 @@ const TeacherEditScreen = () => {
           {/* 显示已添加的章节 */}
           {sections.length > 0 && (
             <View style={styles.sectionList}>
-              <Text style={styles.sectionTitle}>Added Sections:</Text>
+              <Text style={styles.sectionID}>Added Sections:</Text>
               {sections.map((section) => (
                 <View key={section.id} style={styles.sectionCard}>
-                  <Text style={styles.sectionTitle}>{section.title}</Text>
+                  <Text style={styles.sectionID}>{section.title}</Text>
                   <Text style={styles.sectionDescription}>{section.description}</Text>
                 </View>
               ))}
@@ -188,6 +277,13 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 5,
   },
+  pickerContainer: {
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
   addButton: {
     padding: 15,
     backgroundColor: '#B3A369',
@@ -216,7 +312,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
   },
-  sectionTitle: {
+  sectionID: {
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -227,5 +323,4 @@ const styles = StyleSheet.create({
   },
 });
 
-// Yuanhong add new file
 export default TeacherEditScreen;
