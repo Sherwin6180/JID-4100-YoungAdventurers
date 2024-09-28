@@ -72,8 +72,32 @@ const TeacherRosterEdit = () => {
   };
 
   // 移除学生
-  const removeStudent = (id) => {
-    setStudents(students.filter((student) => student.username !== id));
+  const removeStudent = async (studentUsername) => {
+    try {
+      const response = await fetch(`${server}/api/class/removeEnrollment`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseID,
+          semester,
+          sectionID,
+          studentUsername,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Student removed successfully!');
+        setStudents(students.filter((student) => student.username !== studentUsername)); // 更新学生列表
+      } else {
+        Alert.alert('Error', data.message || 'Failed to remove student.');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'An error occurred while removing the student.');
+    }
   };
 
   return (
@@ -110,7 +134,7 @@ const TeacherRosterEdit = () => {
                 <Text style={styles.studentName}>{student.firstName} {student.lastName}</Text>
                 <TouchableOpacity
                   style={styles.removeButton}
-                  onPress={() => removeStudent(student.username)}
+                  onPress={() => removeStudent(student.username)} // 调用 removeStudent 函数
                 >
                   <MaterialIcons name="delete" size={24} color="red" />
                 </TouchableOpacity>
