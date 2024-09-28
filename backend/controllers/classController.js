@@ -85,12 +85,12 @@ exports.getEnrolledStudents = (req, res) => {
 
 exports.addEnrollment = (req, res) => {
   const { courseID, semester, sectionID, studentUsername } = req.body;
-
+  
   if (!courseID || !semester || !sectionID || !studentUsername) {
     return res.status(400).json({ message: 'Course ID, semester, section ID, and student username are required.' });
   }
 
-  db.query('SELECT accountType FROM users WHERE username = ?', [studentUsername], (err, results) => {
+  db.query('SELECT accountType, firstName, lastName FROM users WHERE username = ?', [studentUsername], (err, results) => {
     if (err) {
       return res.status(500).json({ message: 'Database error', error: err });
     }
@@ -99,7 +99,7 @@ exports.addEnrollment = (req, res) => {
       return res.status(404).json({ message: 'Student not found.' });
     }
 
-    const accountType = results[0].accountType;
+    const { accountType, firstName, lastName } = results[0];
     if (accountType !== 'student') {
       return res.status(400).json({ message: 'User is not a student.' });
     }
@@ -124,7 +124,15 @@ exports.addEnrollment = (req, res) => {
               return res.status(500).json({ message: 'Error adding enrollment', error: err });
             }
 
-            res.status(201).json({ message: 'Enrollment added successfully!' });
+            // Return full student details in the response
+            res.status(201).json({
+              message: 'Enrollment added successfully!',
+              student: {
+                username: studentUsername,
+                firstName,
+                lastName
+              }
+            });
           }
         );
       }

@@ -1,40 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { SafeAreaView, StatusBar, View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons'; 
+import { UserContext } from '../../UserContext'; // 引入 UserContext
+import config from '../../config';
+
+const server = config.apiUrl;
 
 const TeacherRosterEdit = () => {
   const navigation = useNavigation();
+  const { courseID, semester, sectionID } = useContext(UserContext); // 从 UserContext 中获取 courseID, semester, sectionID
 
-  // 假设已有学生的列表
-  const [students, setStudents] = useState([
-    { id: 1, name: 'John Doe' },
-    { id: 2, name: 'Jane Smith' },
-    { id: 3, name: 'Sam Johnson' },
-  ]);
+  const [students, setStudents] = useState([]);
+  const [newStudentUsername, setNewStudentUsername] = useState(''); // 添加新学生用户名
 
-  // 添加学生的状态
-  const [newStudentName, setNewStudentName] = useState('');
+  // 在组件加载时获取已 enroll 的学生
+  useEffect(() => {
+    fetchEnrolledStudents();
+  }, []);
 
-  // 添加学生
-  const addStudent = () => {
-    if (newStudentName.trim() === '') {
-      Alert.alert('Error', 'Please provide a valid student name.');
+  // 获取当前 section 下所有已 enroll 的学生
+  const fetchEnrolledStudents = async () => {
+    try {
+      const response = await fetch(`${server}/api/class/getEnrolledStudents/${courseID}/${semester}/${sectionID}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setStudents(data.students); // 设置获取到的学生数据
+      } else {
+        Alert.alert('Error', data.message || 'Failed to fetch students');
+      }
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Error', 'An error occurred while fetching students.');
+    }
+  };
+
+  // 添加新学生
+  const addStudent = async () => {
+    if (newStudentUsername.trim() === '') {
+      Alert.alert('Error', 'Please provide a valid student username.');
       return;
     }
 
-    const newStudent = {
-      id: students.length + 1,  // 简单ID生成
-      name: newStudentName,
-    };
+    try {
+      const response = await fetch(`${server}/api/class/addEnrollment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseID,
+          semester,
+          sectionID,
+          studentUsername: newStudentUsername,
+        }),
+      });
 
-    setStudents([...students, newStudent]);
-    setNewStudentName('');  // 清空输入框
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Student added successfully!');
+        setStudents([...students, data.student]); // 更新学生列表
+        setNewStudentUsername(''); // 清空输入框
+      } else {
+        Alert.alert('Error', data.message || 'Failed to add student.');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'An error occurred while adding the student.');
+    }
   };
 
   // 移除学生
   const removeStudent = (id) => {
-    setStudents(students.filter((student) => student.id !== id));
+    setStudents(students.filter((student) => student.username !== id));
   };
 
   return (
@@ -63,26 +102,28 @@ const TeacherRosterEdit = () => {
         <ScrollView contentContainerStyle={styles.container}>
           <Text style={styles.title}>Edit Roster</Text>
 
-          {/* 学生列表 */}
+          {/* 显示当前 section 下所有学生 */}
           <Text style={styles.subTitle}>Current Students:</Text>
           {students.map((student) => (
-            <View key={student.id} style={styles.studentCard}>
-              <Text style={styles.studentName}>{student.name}</Text>
-              <TouchableOpacity
-                style={styles.removeButton}
-                onPress={() => removeStudent(student.id)}
-              >
-                <MaterialIcons name="delete" size={24} color="red" />
-              </TouchableOpacity>
-            </View>
+            student && student.firstName && student.lastName ? (
+              <View key={student.username} style={styles.studentCard}>
+                <Text style={styles.studentName}>{student.firstName} {student.lastName}</Text>
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => removeStudent(student.username)}
+                >
+                  <MaterialIcons name="delete" size={24} color="red" />
+                </TouchableOpacity>
+              </View>
+            ) : null // If student data is incomplete, don't render
           ))}
 
-          {/* 添加学生 */}
+          {/* 输入新学生的用户名并添加 */}
           <TextInput
             style={styles.input}
-            placeholder="New Student Name"
-            value={newStudentName}
-            onChangeText={setNewStudentName}
+            placeholder="Enter Student Username"
+            value={newStudentUsername}
+            onChangeText={setNewStudentUsername}
           />
           <TouchableOpacity style={styles.addButton} onPress={addStudent}>
             <Text style={styles.buttonText}>Add Student</Text>
@@ -93,7 +134,7 @@ const TeacherRosterEdit = () => {
   );
 };
 
-// 样式定义
+// 样式定义保持不变
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
