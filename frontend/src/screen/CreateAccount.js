@@ -4,15 +4,21 @@ import config from '../../config';
 const server = config.apiUrl;
 
 const CreateAccountScreen = ({ navigation }) => {
-  
+
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [accountType, setAccountType] = useState('student'); // account type, default as a student
+  const [securityQuestion1, setSecurityQuestion1] = useState(''); // security question 1
+  const [securityAnswer1, setSecurityAnswer1] = useState(''); // answer for security question 1
+  const [securityQuestion2, setSecurityQuestion2] = useState(''); // security question 2
+  const [securityAnswer2, setSecurityAnswer2] = useState(''); // answer for security question 2
 
   // create account button
   const handleCreateAccount = () => {
-    if (username === '' || email === '' || password === '') {
+    if (username === '' || email === '' || password === '' || firstName === '' || lastName ==='' || securityQuestion1 === '' || securityAnswer1 === '' || securityQuestion2 === '' || securityAnswer2 === '') {
       Alert.alert('Error', 'Please fill out all fields.');
     } else {
       fetch(`${server}/api/auth/register`, {
@@ -24,7 +30,13 @@ const CreateAccountScreen = ({ navigation }) => {
           username,
           email,
           password,
+          firstName,
+          lastName,
           accountType,
+          securityQuestion1,
+          securityAnswer1,
+          securityQuestion2,
+          securityAnswer2,
         }),
       })
       .then(response => response.json())
@@ -40,7 +52,7 @@ const CreateAccountScreen = ({ navigation }) => {
         console.error(error);
         Alert.alert('Error', 'Failed to create account.');
       });
-      // Alert.alert('Success', `Account created for ${username}`);
+      Alert.alert('Success', `Account created for ${username}`);
       // navigation.navigate('SecurityQuestions'); // move to security question page
     }
   };
@@ -74,6 +86,54 @@ const CreateAccountScreen = ({ navigation }) => {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+      />
+
+      {/* firstName input box */}
+      <TextInput
+        style={styles.input}
+        placeholder="First Name"
+        value={firstName}
+        onChangeText={setFirstName}
+      />
+
+      {/* lastName input box */}
+      <TextInput
+        style={styles.input}
+        placeholder="Last Name"
+        value={lastName}
+        onChangeText={setLastName}
+      />
+
+      {/* security question 1 input box */}
+      <TextInput
+        style={styles.input}
+        placeholder="Security Question 1"
+        value={securityQuestion1}
+        onChangeText={setSecurityQuestion1}
+      />
+
+      {/* security answer 1 input box */}
+      <TextInput
+        style={styles.input}
+        placeholder="Answer for Question 1"
+        value={securityAnswer1}
+        onChangeText={setSecurityAnswer1}
+      />
+
+      {/* security question 2 input box */}
+      <TextInput
+        style={styles.input}
+        placeholder="Security Question 2"
+        value={securityQuestion2}
+        onChangeText={setSecurityQuestion2}
+      />
+
+      {/* security answer 2 input box */}
+      <TextInput
+        style={styles.input}
+        placeholder="Answer for Question 2"
+        value={securityAnswer2}
+        onChangeText={setSecurityAnswer2}
       />
 
       {/* choose account type */}
@@ -179,3 +239,4 @@ const styles = StyleSheet.create({
   
   export default CreateAccountScreen;
   // This is a test message 2
+  // add test message here

@@ -7,5 +7,4 @@ router.get('/getSectionDetails/:courseID/:semester/:sectionID', classController.
 router.get('/getEnrolledStudents/:courseID/:semester/:sectionID', classController.getEnrolledStudents);
 router.post('/addEnrollment', classController.addEnrollment);
 
-
 module.exports = router;

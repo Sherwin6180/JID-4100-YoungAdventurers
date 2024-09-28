@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Alert, View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { UserContext } from '../../UserContext';
 import config from '../../config';
 
 const server = config.apiUrl;
 
 const LoginScreen = ({ navigation }) => {
+  const { setUsername } = useContext(UserContext); // Use context to set the username
 
-  const [username, setUsername] = useState(''); // User Name Status
+  const [usernameInput, setUsernameInput] = useState(''); // User Name Status
   const [password, setPassword] = useState(''); // Password Status
   const [role, setRole] = useState('student'); // Login type, default is student login
 
   // Click on the Login button
   const handleLogin = () => {
     // Check that the username and password are not empty
-    if (username === '' || password === '') {
+    if (usernameInput === '' || password === '') {
       Alert.alert('Error', 'Please enter both username and password.');
     } else {
       fetch(`${server}/api/auth/login`, {
@@ -22,7 +24,7 @@ const LoginScreen = ({ navigation }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username,
+          username: usernameInput,
           password,
           accountType: role,
         }),
@@ -30,10 +32,15 @@ const LoginScreen = ({ navigation }) => {
       .then(response => response.json())
       .then(data => {
         if (data.message.startsWith('Login successful')) {
-          // Authenticate login, currently defaults to success
-          Alert.alert('Success', `Logged in as ${role}: ${username}`);
+          // Set the username globally
+          setUsername(usernameInput);
+
+          // Navigate to TeacherDashboard if role is 'teacher'
+          if (role === 'teacher') {
+            navigation.navigate('TeacherDashboard');
+          }
           // Clear the input box
-          setUsername('');
+          setUsernameInput('');
           setPassword('');
         } else {
           Alert.alert('Error', 'Failed to login.');
@@ -56,7 +63,6 @@ const LoginScreen = ({ navigation }) => {
         {/* Student Login Button */}
         <TouchableOpacity
           style={[styles.roleButton, role === 'student' && styles.selectedRoleButton]}
-          // onPress={() => handleRoleChange('student')}
           onPress={() => setRole('student')}
         >
           <Text style={[styles.roleButtonText, role === 'student' && styles.selectedRoleButtonText]}>Student</Text>
@@ -65,7 +71,6 @@ const LoginScreen = ({ navigation }) => {
         {/* Teacher Login Button */}
         <TouchableOpacity
           style={[styles.roleButton, role === 'teacher' && styles.selectedRoleButton]}
-          // onPress={() => handleRoleChange('teacher')}
           onPress={() => setRole('teacher')}
         >
           <Text style={[styles.roleButtonText, role === 'teacher' && styles.selectedRoleButtonText]}>Teacher</Text>
@@ -76,8 +81,8 @@ const LoginScreen = ({ navigation }) => {
       <TextInput
         style={styles.input}
         placeholder="Username"
-        value={username}
-        onChangeText={setUsername}
+        value={usernameInput}
+        onChangeText={setUsernameInput}
       />
 
       {/* Password input box */}
