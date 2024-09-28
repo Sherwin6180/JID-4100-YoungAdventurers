@@ -8,6 +8,8 @@ const CreateAccountScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [accountType, setAccountType] = useState('student'); // account type, default as a student
   const [securityQuestion1, setSecurityQuestion1] = useState(''); // security question 1
   const [securityAnswer1, setSecurityAnswer1] = useState(''); // answer for security question 1
@@ -16,7 +18,7 @@ const CreateAccountScreen = ({ navigation }) => {
 
   // create account button
   const handleCreateAccount = () => {
-    if (username === '' || email === '' || password === '' || securityQuestion1 === '' || securityAnswer1 === '' || securityQuestion2 === '' || securityAnswer2 === '') {
+    if (username === '' || email === '' || password === '' || firstName === '' || lastName ==='' || securityQuestion1 === '' || securityAnswer1 === '' || securityQuestion2 === '' || securityAnswer2 === '') {
       Alert.alert('Error', 'Please fill out all fields.');
     } else {
       fetch(`${server}/api/auth/register`, {
@@ -28,6 +30,8 @@ const CreateAccountScreen = ({ navigation }) => {
           username,
           email,
           password,
+          firstName,
+          lastName,
           accountType,
           securityQuestion1,
           securityAnswer1,
@@ -82,6 +86,22 @@ const CreateAccountScreen = ({ navigation }) => {
         value={password}
         onChangeText={setPassword}
         secureTextEntry
+      />
+
+      {/* firstName input box */}
+      <TextInput
+        style={styles.input}
+        placeholder="First Name"
+        value={firstName}
+        onChangeText={setFirstName}
+      />
+
+      {/* lastName input box */}
+      <TextInput
+        style={styles.input}
+        placeholder="Last Name"
+        value={lastName}
+        onChangeText={setLastName}
       />
 
       {/* security question 1 input box */}

@@ -45,9 +45,30 @@ const TeacherEditScreen = () => {
       Alert.alert('Error', 'Please fill all course fields and at least one section.');
       return;
     }
-    const courseType = "current";
-  
-    // Prepare the data to be sent to the API
+
+    // 获取当前年份和月份
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // JavaScript 的月份从 0 开始，所以需要加 1
+    
+    // 从 semester 提取年份和学期
+    const [semesterTerm, semesterYear] = semester.split(' '); // 如 "Spring 2024" -> ["Spring", "2024"]
+
+    // 判定 courseType
+    let courseType = "current"; // 默认为 current
+    
+    if (parseInt(semesterYear) < currentYear) {
+      courseType = "previous"; // 输入年份小于当前年份
+    } else if (parseInt(semesterYear) === currentYear) {
+      if (semesterTerm === "Spring" && currentMonth > 4) {
+        courseType = "previous"; // 当前为夏季或秋季，而输入为春季
+      } else if (semesterTerm === "Summer" && currentMonth > 7) {
+        courseType = "previous"; // 当前为秋季，而输入为夏季
+      }
+      // 如果输入的学期是秋季，且当前是秋季或之前的月份，保持 courseType 为 current
+    }
+
+    // 准备发送给 API 的数据
     const courseData = {
       courseID,
       courseTitle,
@@ -60,17 +81,17 @@ const TeacherEditScreen = () => {
         sectionDescription: section.description
       }))
     };
-  
+
     try {
-      // Make the API request
-      const response = await fetch(`${server}/api/course/createCourse`, {
+      // 发送 API 请求
+      const response = await fetch(`${server}/api/teacher/teachNewCourse`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(courseData),
       });
-  
+
       if (response.ok) {
         Alert.alert('Success', 'Course created successfully!');
         navigation.goBack(); // Navigate back after success

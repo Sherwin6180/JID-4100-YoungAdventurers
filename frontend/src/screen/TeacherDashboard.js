@@ -1,25 +1,53 @@
-import React, { useState } from 'react';
-import { SafeAreaView, StatusBar, View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect, useContext } from 'react';
+import { SafeAreaView, StatusBar, View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons'; // 使用 MaterialIcons 图标
+import config from '../../config';
+import { UserContext } from '../../UserContext';
+
+const server = config.apiUrl;
 
 const TeacherDashboard = () => {
+  const isFocused = useIsFocused();
   const navigation = useNavigation();
+  const { username } = useContext(UserContext);
+  const { setCourseID, setSemester } = useContext(UserContext);
 
-  // 当前课程列表 (示例数据，实际通过 API 获取)
-  const [currentCourses] = useState([
-    { id: 1, title: 'Math 101', description: 'Introduction to Algebra' },
-    { id: 2, title: 'Physics 201', description: 'Basic Mechanics' },
-  ]);
+  // 当前课程列表和之前课程列表的状态
+  const [currentCourses, setCurrentCourses] = useState([]);
+  const [previousCourses, setPreviousCourses] = useState([]);
 
-  // 之前课程列表 (示例数据，实际通过 API 获取)
-  const [previousCourses] = useState([
-    { id: 3, title: 'History 101', description: 'World History Overview' },
-    { id: 4, title: 'Chemistry 101', description: 'Introduction to Chemistry' },
-  ]);
+  useEffect(() => {
+    if (isFocused) {
+      fetchCourses(); // 每次页面聚焦时获取最新课程数据
+    }
+  }, [isFocused]); // 依赖 isFocused
+
+  const fetchCourses = async () => {
+    try {
+      
+      const response = await fetch(`${server}/api/teacher/getCoursesByTeacher/${username}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        const current = data.courses.filter(course => course.courseType === 'current');
+        const previous = data.courses.filter(course => course.courseType === 'previous');
+        setCurrentCourses(current);
+        setPreviousCourses(previous);
+      } else {
+        Alert.alert('Error', data.message || 'Failed to fetch courses');
+      }
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Error', 'An error occurred while fetching courses.');
+    }
+  };
+ 
 
   // 点击后跳转到课程详情页面，传递课程 ID 和课程标题作为参数
-  const handleCourseClick = (id, title) => {
+  const handleCourseClick = (id, title, semester) => {
+    setCourseID(id);
+    setSemester(semester);
     navigation.navigate('CourseSections', { courseId: id, courseTitle: title }); // 传递 courseId 和 courseTitle
   };
 
@@ -72,11 +100,11 @@ const TeacherDashboard = () => {
           <View style={styles.courseContainer}>
             {currentCourses.map((course) => (
               <TouchableOpacity
-                key={course.id}
+                key={course.courseID}
                 style={styles.courseCard}
-                onPress={() => handleCourseClick(course.id, course.title)} // 点击时传递课程 ID 和标题
+                onPress={() => handleCourseClick(course.courseID, course.courseTitle, course.semester)} // 点击时传递课程 ID 和标题
               >
-                <Text style={styles.courseTitle}>{course.title}</Text>
+                <Text style={styles.courseTitle}>{course.courseTitle}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -86,14 +114,15 @@ const TeacherDashboard = () => {
           <View style={styles.courseContainer}>
             {previousCourses.map((course) => (
               <TouchableOpacity
-                key={course.id}
+                key={course.courseID}
                 style={styles.courseCard}
-                onPress={() => handleCourseClick(course.id, course.title)} // 点击时传递课程 ID 和标题
+                onPress={() => handleCourseClick(course.courseID, course.courseTitle, course.semester)} // 点击时传递课程 ID 和标题
               >
-                <Text style={styles.courseTitle}>{course.title}</Text>
+                <Text style={styles.courseTitle}>{course.courseID}</Text>
               </TouchableOpacity>
             ))}
           </View>
+
           {/* "Add Courses" 按钮 */}
           <TouchableOpacity
             style={styles.addButton}
@@ -101,6 +130,7 @@ const TeacherDashboard = () => {
           >
             <Text style={styles.addButtonText}>Add Courses</Text>
           </TouchableOpacity>
+
           {/* 添加导航到TeacherRosterEdit页面的按钮 */}
           <TouchableOpacity
             style={styles.addButton}
@@ -108,7 +138,6 @@ const TeacherDashboard = () => {
           >
             <Text style={styles.addButtonText}>Student Roster</Text>
           </TouchableOpacity>
-          
 
         </ScrollView>
       </View>
@@ -116,7 +145,7 @@ const TeacherDashboard = () => {
   );
 };
 
-// 样式定义
+// 样式定义保持不变
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,

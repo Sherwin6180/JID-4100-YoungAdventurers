@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Alert, View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
-import { UserContext } from '../../UserContext'; // Adjust the path as necessary
+import { UserContext } from '../../UserContext';
 import config from '../../config';
 
 const server = config.apiUrl;
