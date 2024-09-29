@@ -1,11 +1,13 @@
 // connect to AWS database
-const mysql = require('mysql');
+const mysql = require('mysql2');
 
 const db = mysql.createConnection({
-  host     : 'database-2.croas0wiukl6.us-east-2.rds.amazonaws.com',
+  // host     : 'database-2.croas0wiukl6.us-east-2.rds.amazonaws.com',
+  host: 'localhost',
   port     : '3306',
-  user     : 'admin',
-  password : '12345678',
+  user     : 'root',
+  // password : '12345678',
+  password: 'letsmakeithappen',
   database: 'evaluation'
 });
 

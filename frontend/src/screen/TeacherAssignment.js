@@ -22,7 +22,7 @@ const TeacherAssignment = () => {
   // 获取当前 section 下所有作业
   const fetchAssignments = async () => {
     try {
-      const response = await fetch(`${server}/api/class/getAssignments/${courseID}/${semester}/${sectionID}`);
+      const response = await fetch(`${server}/api/assignment/fetchAssignments/${courseID}/${semester}/${sectionID}`);
       const data = await response.json();
 
       if (response.ok) {
@@ -44,7 +44,7 @@ const TeacherAssignment = () => {
     }
 
     try {
-      const response = await fetch(`${server}/api/class/addAssignment`, {
+      const response = await fetch(`${server}/api/assignment/createAssignment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -53,13 +53,15 @@ const TeacherAssignment = () => {
           courseID,
           semester,
           sectionID,
-          assignmentName: newAssignmentName,
+          assignmentTitle: newAssignmentName,
         }),
       });
 
       const data = await response.json();
       if (response.ok) {
         Alert.alert('Success', 'Assignment added successfully!');
+        
+        // Ensure that the new assignment includes the assignmentID returned by the backend
         setAssignments([...assignments, data.assignment]); // 更新作业列表
         setNewAssignmentName(''); // 清空输入框
       } else {
@@ -72,25 +74,22 @@ const TeacherAssignment = () => {
   };
 
   // 移除作业
-  const removeAssignment = async (assignmentName) => {
+  const removeAssignment = async (assignmentID) => {
     try {
-      const response = await fetch(`${server}/api/class/removeAssignment`, {
+      const response = await fetch(`${server}/api/assignment/removeAssignment`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          courseID,
-          semester,
-          sectionID,
-          assignmentName,
+          assignmentID
         }),
       });
 
       const data = await response.json();
       if (response.ok) {
         Alert.alert('Success', 'Assignment removed successfully!');
-        setAssignments(assignments.filter((assignment) => assignment.name !== assignmentName)); // 更新作业列表
+        setAssignments(assignments.filter((assignment) => assignment.assignmentID !== assignmentID)); // 更新作业列表
       } else {
         Alert.alert('Error', data.message || 'Failed to remove assignment.');
       }
@@ -99,6 +98,7 @@ const TeacherAssignment = () => {
       Alert.alert('Error', 'An error occurred while removing the assignment.');
     }
   };
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -129,18 +129,19 @@ const TeacherAssignment = () => {
           {/* 显示当前 section 下所有作业 */}
           <Text style={styles.subTitle}>Current Assignments:</Text>
           {assignments.map((assignment) => (
-            assignment && assignment.name ? (
-              <View key={assignment.name} style={styles.assignmentCard}>
-                <Text style={styles.assignmentName}>{assignment.name}</Text>
+            assignment && assignment.assignmentTitle ? (
+              <View key={assignment.assignmentID} style={styles.assignmentCard}>
+                <Text style={styles.assignmentName}>{assignment.assignmentTitle}</Text>
                 <TouchableOpacity
                   style={styles.removeButton}
-                  onPress={() => removeAssignment(assignment.name)} // 调用 removeAssignment 函数
+                  onPress={() => removeAssignment(assignment.assignmentID)} // Call removeAssignment with correct title
                 >
                   <MaterialIcons name="delete" size={24} color="red" />
                 </TouchableOpacity>
               </View>
             ) : null // If assignment data is incomplete, don't render
           ))}
+
 
           {/* 输入新作业的名称并添加 */}
           <TextInput

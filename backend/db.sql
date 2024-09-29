@@ -88,3 +88,20 @@ CREATE TABLE teachings (
   FOREIGN KEY (teacherUsername) REFERENCES users (username) ON DELETE CASCADE,
   FOREIGN KEY (courseID, sectionID, semester) REFERENCES sections (courseID, sectionID, semester)
 ) ENGINE = innodb;
+
+DROP TABLE IF EXISTS assignments;
+
+CREATE TABLE assignments (
+  assignmentID INT AUTO_INCREMENT PRIMARY KEY, -- Make assignmentID the primary key
+  courseID VARCHAR(255) NOT NULL,
+  semester ENUM('Spring 2024', 'Summer 2024', 'Fall 2024', 
+                'Spring 2025', 'Summer 2025', 'Fall 2025',
+                'Spring 2026', 'Summer 2026', 'Fall 2026',
+                'Spring 2027', 'Summer 2027', 'Fall 2027',
+                'Spring 2028', 'Summer 2028', 'Fall 2028',
+                'Spring 2029', 'Summer 2029', 'Fall 2029',
+                'Spring 2030', 'Summer 2030', 'Fall 2030') NOT NULL,
+  sectionID VARCHAR(255) NOT NULL,
+  assignmentTitle VARCHAR(255) NOT NULL,
+  FOREIGN KEY (courseID, semester, sectionID) REFERENCES sections (courseID, semester, sectionID)
+) ENGINE = InnoDB;
