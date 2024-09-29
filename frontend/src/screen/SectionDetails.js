@@ -57,14 +57,6 @@ const SectionDetail = () => {
             >
               <MaterialIcons name="dashboard" size={30} color="black" />
             </TouchableOpacity>
-
-            {/* 图标 3: 人员管理 */}
-            {/* <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => navigation.navigate('TeacherRoster', { courseID, sectionID })}  // 点击跳转到 TeacherRoster 页面，并传递参数
-            >
-              <MaterialIcons name="person" size={30} color="black" />
-            </TouchableOpacity> */}
           </View>
         </View>
 
@@ -86,6 +78,14 @@ const SectionDetail = () => {
             onPress={() => navigation.navigate('TeacherRoster')}
           >
             <Text style={styles.addButtonText}>Student Roster</Text>
+          </TouchableOpacity>
+
+          {/* 新添加的 Assignment 按钮 */}
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate('TeacherAssignment')}
+          >
+            <Text style={styles.addButtonText}>Assignment</Text>
           </TouchableOpacity>
         </View>
       </View>
