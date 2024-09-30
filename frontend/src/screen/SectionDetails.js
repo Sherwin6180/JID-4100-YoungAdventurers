@@ -57,14 +57,6 @@ const SectionDetail = () => {
             >
               <MaterialIcons name="dashboard" size={30} color="black" />
             </TouchableOpacity>
-
-            {/* 图标 3: 人员管理 */}
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => navigation.navigate('TeacherRoster', { courseID, sectionID })}  // 点击跳转到 TeacherRoster 页面，并传递参数
-            >
-              <MaterialIcons name="person" size={30} color="black" />
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -79,6 +71,22 @@ const SectionDetail = () => {
 
           <Text style={styles.sectionHeader}>Section Description</Text>
           <Text style={styles.description}>{sectionDescription}</Text>
+
+          {/* 添加导航到TeacherRosterEdit页面的按钮 */}
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate('TeacherRoster')}
+          >
+            <Text style={styles.addButtonText}>Student Roster</Text>
+          </TouchableOpacity>
+
+          {/* 新添加的 Assignment 按钮 */}
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate('TeacherAssignment')}
+          >
+            <Text style={styles.addButtonText}>Assignment</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -133,6 +141,18 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 16,
     color: '#666',
+  },
+  addButton: {
+    padding: 15,
+    backgroundColor: '#B3A369',
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

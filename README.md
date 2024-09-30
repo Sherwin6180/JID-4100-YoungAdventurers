@@ -62,15 +62,22 @@ git push origin <branch-name>
 * Navigate back to the "Conversation" tab and merge the pull request
 
 # Release Notes
-## v0.0.0
+## v0.2.0
 ### New Features
-* Implemented a UI flow from assignment screen to form screen and vice versa.
-* Created a MySQL database and hosted it on AWS RDS.
-* Created a Node.js backend to connect to the database and provide APIs for task retrievement, question retrieviement, and form submission.
+* Implemented the front-end UI for the dashboard page.
+* Implemented the front-end UI for the course edit page.
+* Implemented the front-end UI for the section edit page.
+* Implemented the front-end UI for the section detail page.
+* Implemented the front-end UI for the roster view edit page.
+* Implemented RESTful APIs for creating new classes and sections.
+* Implemented APIs to fetch all students from database.
+* Connect dashboard, course edit, section edit and roster view edit page to the backend database.
 ### Bug Fixes
-* The status of the task will be updated to "Completed" after the user finishes the form.
+* Previously roster view edit page was redirected from the dashboard, now it is redirected from the section detail page.
+* The problem of screen misalignment has been solved.
 ### Known Issues
-* The user currently is not able to save the answers and review them later before submitting.
+* Some page transitions are not visually smooth enough.
+* AWS occasionally crashes.
 ## v0.1.0
 ### New Features
 * Implemented the front-end UI for the user creation page.
@@ -86,3 +93,13 @@ git push origin <branch-name>
 * User enters email and password without validating the formatting.
 * No validation of multiple accounts tied to one email address.
 * The situation where the updated password is identical to the original password has not been taken into consideration.
+## v0.0.0
+### New Features
+* Implemented a UI flow from assignment screen to form screen and vice versa.
+* Created a MySQL database and hosted it on AWS RDS.
+* Created a Node.js backend to connect to the database and provide APIs for task retrievement, question retrieviement, and form submission.
+### Bug Fixes
+* The status of the task will be updated to "Completed" after the user finishes the form.
+### Known Issues
+* The user currently is not able to save the answers and review them later before submitting.
+
