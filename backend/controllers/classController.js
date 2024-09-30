@@ -131,3 +131,38 @@ exports.addEnrollment = (req, res) => {
     );
   });
 };
+
+exports.removeEnrollment = (req, res) => {
+    const { courseID, semester, sectionID, studentUsername } = req.body;
+    
+    if (!courseID || !semester || !sectionID || !studentUsername) {
+      return res.status(400).json({ message: 'Course ID, semester, section ID, and student username are required.' });
+    }
+  
+    db.query(
+      'SELECT * FROM enrollments WHERE studentUsername = ? AND courseID = ? AND sectionID = ? AND semester = ?',
+      [studentUsername, courseID, sectionID, semester],
+      (err, enrollmentResults) => {
+        if (err) {
+          return res.status(500).json({ message: 'Database error', error: err });
+        }
+  
+        if (enrollmentResults.length === 0) {
+          return res.status(404).json({ message: 'Enrollment not found.' });
+        }
+  
+        // Proceed to remove the enrollment
+        db.query(
+          'DELETE FROM enrollments WHERE studentUsername = ? AND courseID = ? AND sectionID = ? AND semester = ?',
+          [studentUsername, courseID, sectionID, semester],
+          (err) => {
+            if (err) {
+              return res.status(500).json({ message: 'Error removing enrollment', error: err });
+            }
+  
+            res.status(200).json({ message: 'Enrollment removed successfully!' });
+          }
+        );
+      }
+    );
+  };
