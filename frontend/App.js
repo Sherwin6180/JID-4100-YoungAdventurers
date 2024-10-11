@@ -11,6 +11,10 @@ import TeacherEditScreen from './src/screen/TeacherEdit';
 import TeacherRosterScreen from './src/screen/TeacherRoster';
 import SectionDetailScreen from './src/screen/SectionDetails';
 import TeacherAssignmentScreen from './src/screen/TeacherAssignment';
+import StudentDashboardScreen from './src/screen/StudentDashboard';
+import StudentCourseDetailsScreen from './src/screen/StudentCourseDetails';
+import StudentDoAssignmentScreen from './src/screen/StudentDoAssignment';
+import TeacherEditAssignmentQuestionScreen from './src/screen/TeacherEditAssignmentQuestion';
 import { UserContext, UserProvider } from './UserContext';
 
 const Stack = createNativeStackNavigator();
@@ -87,6 +91,30 @@ const App = () => {
           <Stack.Screen 
             name="TeacherAssignment" 
             component={TeacherAssignmentScreen} 
+          /> 
+
+          {/* Student Dashboard Screen*/}
+          <Stack.Screen 
+            name="StudentDashboard" 
+            component={StudentDashboardScreen} 
+          /> 
+
+          {/* Student Course Details Screen*/}
+          <Stack.Screen 
+            name="StudentCourseDetails" 
+            component={StudentCourseDetailsScreen} 
+          /> 
+
+          {/* Student Do Assignment Screen*/}
+          <Stack.Screen 
+            name="StudentDoAssignment" 
+            component={StudentDoAssignmentScreen} 
+          /> 
+
+          {/* Teacher Edit Assignment Question Screen*/}
+          <Stack.Screen 
+            name="TeacherEditAssignmentQuestion" 
+            component={TeacherEditAssignmentQuestionScreen} 
           /> 
         </Stack.Navigator>
       </UserProvider>
