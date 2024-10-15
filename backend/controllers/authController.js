@@ -7,7 +7,8 @@ exports.register = (req, res) => {
   if (!username || !email || !password || !firstName || !lastName || !accountType || !securityQuestion1 || !securityAnswer1 || !securityQuestion2 || !securityAnswer2) {
     return res.status(400).json({ message: 'Please fill out all fields.' });
   }
-
+  
+  console.log(`${username}, ${email}, ${password}`);
   const hashedPassword = bcrypt.hashSync(password, 10);
   const hashedAnswer1 = bcrypt.hashSync(securityAnswer1, 10); // hash security answer 1
   const hashedAnswer2 = bcrypt.hashSync(securityAnswer2, 10); // hash security answer 2
