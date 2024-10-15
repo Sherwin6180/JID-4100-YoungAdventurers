@@ -6,15 +6,15 @@ import config from '../../config';
 const server = config.apiUrl;
 
 const LoginScreen = ({ navigation }) => {
-  const { setUsername } = useContext(UserContext); // Use context to set the username
+  const { setUsername } = useContext(UserContext); // 使用 context 来设置用户名
 
-  const [usernameInput, setUsernameInput] = useState(''); // User Name Status
-  const [password, setPassword] = useState(''); // Password Status
-  const [role, setRole] = useState('student'); // Login type, default is student login
+  const [usernameInput, setUsernameInput] = useState(''); // 用户名状态
+  const [password, setPassword] = useState(''); // 密码状态
+  const [role, setRole] = useState('student'); // 登录类型，默认为学生登录
 
-  // Click on the Login button
+  // 点击登录按钮后的处理函数
   const handleLogin = () => {
-    // Check that the username and password are not empty
+    // 检查用户名和密码是否为空
     if (usernameInput === '' || password === '') {
       Alert.alert('Error', 'Please enter both username and password.');
     } else {
@@ -32,17 +32,19 @@ const LoginScreen = ({ navigation }) => {
       .then(response => response.json())
       .then(data => {
         if (data.message.startsWith('Login successful')) {
-          // Set the username globally
+          // 全局设置用户名
           setUsername(usernameInput);
 
-          // Navigate to TeacherDashboard if role is 'teacher'
+          // 如果角色是 teacher，则跳转到 TeacherDashboard 页面
           if (role === 'teacher') {
             navigation.navigate('TeacherDashboard');
-          }
-          else {
-            Alert.alert('Sucessfully login');
-          }
-          // Clear the input box
+          } 
+          // 如果角色是 student，则跳转到 StudentDashboard 页面
+          else if (role === 'student') {
+            navigation.navigate('StudentDashboard');
+          } 
+
+          // 清空输入框
           setUsernameInput('');
           setPassword('');
         } else {
@@ -58,12 +60,12 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      {/* Login Page Title */}
+      {/* 登录页面标题 */}
       <Text style={styles.title}>User Login</Text>
 
-      {/* Student and Teacher Login Options */}
+      {/* 学生和教师登录选项 */}
       <View style={styles.roleContainer}>
-        {/* Student Login Button */}
+        {/* 学生登录按钮 */}
         <TouchableOpacity
           style={[styles.roleButton, role === 'student' && styles.selectedRoleButton]}
           onPress={() => setRole('student')}
@@ -71,7 +73,7 @@ const LoginScreen = ({ navigation }) => {
           <Text style={[styles.roleButtonText, role === 'student' && styles.selectedRoleButtonText]}>Student</Text>
         </TouchableOpacity>
 
-        {/* Teacher Login Button */}
+        {/* 教师登录按钮 */}
         <TouchableOpacity
           style={[styles.roleButton, role === 'teacher' && styles.selectedRoleButton]}
           onPress={() => setRole('teacher')}
@@ -80,7 +82,7 @@ const LoginScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* User name input box */}
+      {/* 用户名输入框 */}
       <TextInput
         style={styles.input}
         placeholder="Username"
@@ -88,26 +90,26 @@ const LoginScreen = ({ navigation }) => {
         onChangeText={setUsernameInput}
       />
 
-      {/* Password input box */}
+      {/* 密码输入框 */}
       <TextInput
         style={styles.input}
         placeholder="Password"
         value={password}
         onChangeText={setPassword}
-        secureTextEntry // Hide the entered password
+        secureTextEntry // 隐藏输入的密码
       />
 
-      {/* Login button */}
+      {/* 登录按钮 */}
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Login</Text>
       </TouchableOpacity>
 
-      {/* Create an account */}
+      {/* 创建账户 */}
       <TouchableOpacity style={styles.linkButton} onPress={() => navigation.navigate('CreateAccount')}>
         <Text style={styles.linkButtonText}>Create Account</Text>
       </TouchableOpacity>
 
-      {/* Retrieve password */}
+      {/* 忘记/重置密码 */}
       <TouchableOpacity style={styles.linkButton} onPress={() => navigation.navigate('ResetPassword')}>
         <Text style={styles.linkButtonText}>Forgot/Reset Password</Text>
       </TouchableOpacity>
@@ -115,7 +117,7 @@ const LoginScreen = ({ navigation }) => {
   );
 };
 
-// Style Definition
+// 样式定义
 const styles = StyleSheet.create({
   container: {
     flex: 1,

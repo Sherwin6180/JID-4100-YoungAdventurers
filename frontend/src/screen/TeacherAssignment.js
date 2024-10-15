@@ -99,6 +99,10 @@ const TeacherAssignment = () => {
     }
   };
 
+  // 点击作业卡片跳转到作业编辑页面
+  const handleEditAssignment = (assignmentID, assignmentTitle) => {
+    navigation.navigate('TeacherEditAssignmentQuestion');
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -130,7 +134,11 @@ const TeacherAssignment = () => {
           <Text style={styles.subTitle}>Current Assignments:</Text>
           {assignments.map((assignment) => (
             assignment && assignment.assignmentTitle ? (
-              <View key={assignment.assignmentID} style={styles.assignmentCard}>
+              <TouchableOpacity
+                key={assignment.assignmentID}
+                style={styles.assignmentCard}
+                onPress={() => handleEditAssignment(assignment.assignmentID, assignment.assignmentTitle)}
+              >
                 <Text style={styles.assignmentName}>{assignment.assignmentTitle}</Text>
                 <TouchableOpacity
                   style={styles.removeButton}
@@ -138,10 +146,9 @@ const TeacherAssignment = () => {
                 >
                   <MaterialIcons name="delete" size={24} color="red" />
                 </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
             ) : null // If assignment data is incomplete, don't render
           ))}
-
 
           {/* 输入新作业的名称并添加 */}
           <TextInput
@@ -207,6 +214,7 @@ const styles = StyleSheet.create({
   },
   assignmentName: {
     fontSize: 16,
+    flex: 1, // 使文本占据剩余空间
   },
   removeButton: {
     padding: 10,
