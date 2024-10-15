@@ -39,6 +39,9 @@ const LoginScreen = ({ navigation }) => {
           if (role === 'teacher') {
             navigation.navigate('TeacherDashboard');
           }
+          else {
+            Alert.alert('Sucessfully login');
+          }
           // Clear the input box
           setUsernameInput('');
           setPassword('');
