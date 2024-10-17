@@ -105,3 +105,28 @@ CREATE TABLE assignments (
   assignmentTitle VARCHAR(255) NOT NULL,
   FOREIGN KEY (courseID, semester, sectionID) REFERENCES sections (courseID, semester, sectionID)
 ) ENGINE = InnoDB;
+
+DROP TABLE IF EXISTS questions;
+
+CREATE TABLE questions (
+  questionID INT AUTO_INCREMENT PRIMARY KEY, -- Make questionID the primary key
+  assignmentID INT NOT NULL,
+  questionText VARCHAR(255) NOT NULL,
+  questionType ENUM('Rating', 'Multiple Choice') NOT NULL,
+  questionOptions JSON NOT NULL,
+  ratingRange VARCHAR(20), 
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID)
+) ENGINE = InnoDB;
+
+DROP TABLE IF EXISTS answers;
+
+CREATE TABLE answers (
+  answerID INT AUTO_INCREMENT PRIMARY KEY, -- Make questionID the primary key
+  questionID INT NOT NULL,
+  studentUsername VARCHAR(255) NOT NULL,
+  studentAnswer JSON NOT NULL,
+  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (studentUsername) REFERENCES enrollments (studentUsername) ON DELETE CASCADE,
+  FOREIGN KEY (questionID) REFERENCES questions (questionID) ON DELETE CASCADE
+) ENGINE = InnoDB;
