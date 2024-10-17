@@ -7,9 +7,10 @@ export const UserProvider = ({ children }) => {
   const [courseID, setCourseID] = useState('');
   const [semester, setSemester] = useState('');
   const [sectionID, setSectionID] = useState('');
+  const [assignmentID, setAssignmentID] = useState('');
 
   return (
-    <UserContext.Provider value={{ username, setUsername, courseID, setCourseID, semester, setSemester, sectionID, setSectionID }}>
+    <UserContext.Provider value={{ username, setUsername, courseID, setCourseID, semester, setSemester, sectionID, setSectionID, assignmentID, setAssignmentID }}>
       {children}
     </UserContext.Provider>
   );

@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker'; // 引入 Picker 组件
 import { useNavigation } from '@react-navigation/native';
+import { UserContext } from '../../UserContext'; // 引入 UserContext
+import config from '../../config';
+
+const server = config.apiUrl;
 
 const EditAssignmentQuestion = () => {
   const navigation = useNavigation(); // 使用 navigation 来控制页面跳转
@@ -10,42 +14,78 @@ const EditAssignmentQuestion = () => {
   const [questionType, setQuestionType] = useState('multiple_choice'); // 当前题目的类型
   const [options, setOptions] = useState(['', '', '', '']); // 存储选择题的选项
   const [ratingRange, setRatingRange] = useState([1, 5]); // 打分题的范围
+  const { assignmentID } = useContext(UserContext); // 从 context 中获取 assignmentID
 
-  // 添加题目到问题列表中
-  const handleAddQuestion = () => {
+  // Fetch questions from the server when the component loads
+  useEffect(() => {
+    fetchQuestions();
+  }, []);
+
+  // Fetch questions from the server
+  const fetchQuestions = async () => {
+    try {
+      const response = await fetch(`${server}/api/assignment/fetchQuestions/${assignmentID}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setQuestions(data.questions); // 将获取到的问题设置到 state 中
+      } else {
+        Alert.alert('Error', data.message || 'Failed to fetch questions');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'An error occurred while fetching questions.');
+    }
+  };
+
+  // 添加题目并将其发送到服务器
+  const handleAddQuestion = async () => {
     if (!questionText) {
       Alert.alert('Error', 'Please enter the question text.');
       return;
     }
 
     const newQuestion = {
-      questionID: `Q${questions.length + 1}`,
       questionText: questionText,
-      type: questionType,
+      questionType: questionType,
+      questionOptions: questionType === 'multiple_choice' ? [...options] : null,
+      ratingRange: questionType === 'rating' ? ratingRange : null,
     };
 
-    if (questionType === 'multiple_choice') {
-      newQuestion.options = [...options];
-    } else if (questionType === 'rating') {
-      newQuestion.range = ratingRange;
+    // 构造要发送给 API 的 payload
+    const payload = {
+      assignmentID,
+      questionText: newQuestion.questionText,
+      questionType: newQuestion.questionType,
+      questionOptions: newQuestion.questionType === 'multiple_choice' ? newQuestion.questionOptions : null,
+      ratingRange: newQuestion.questionType === 'rating' ? newQuestion.ratingRange : null,
+    };
+
+    try {
+      const response = await fetch(`${server}/api/assignment/addQuestion`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        Alert.alert('Error', data.message || 'Failed to add question');
+        return;
+      }
+
+      // 添加问题到列表并重置输入框
+      setQuestions([...questions, newQuestion]);
+      setQuestionText(''); // 清空输入框
+      setOptions(['', '', '', '']); // 重置选项
+      Alert.alert('Success', 'Question added successfully!');
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'An error occurred while adding the question.');
     }
-
-    setQuestions([...questions, newQuestion]); // 将新问题添加到问题列表
-    setQuestionText(''); // 清空当前输入
-    setOptions(['', '', '', '']); // 重置选项
-  };
-
-  // 保存整个作业并返回
-  const handleSaveAssignment = () => {
-    const assignment = {
-      questions: questions,
-    };
-
-    console.log('Assignment saved:', assignment);
-    Alert.alert('Success', 'Assignment saved successfully!');
-
-    // 保存成功后返回上一页
-    navigation.goBack();
   };
 
   // 更新选择题的选项
@@ -123,21 +163,15 @@ const EditAssignmentQuestion = () => {
           questions.map((question, index) => (
             <View key={index} style={styles.questionCard}>
               <Text style={styles.questionText}>{index + 1}. {question.questionText}</Text>
-              {question.type === 'multiple_choice' && (
-                <Text>Options: {question.options.join(', ')}</Text>
-              )}
-              {question.type === 'rating' && (
-                <Text>Rating Range: {question.range[0]} to {question.range[1]}</Text>
-              )}
-              {question.type === 'free_response' && (
-                <Text>Free Response Question</Text>
+              {question.questionType === 'multiple_choice' && (
+                <Text>Options: {question.questionOptions.join(', ')}</Text>
               )}
             </View>
           ))
         )}
 
         {/* 保存作业按钮 */}
-        <TouchableOpacity style={styles.saveButton} onPress={handleSaveAssignment}>
+        <TouchableOpacity style={styles.saveButton} onPress={() => navigation.goBack()}>
           <Text style={styles.saveButtonText}>Save Assignment</Text>
         </TouchableOpacity>
       </ScrollView>

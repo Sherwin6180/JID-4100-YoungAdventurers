@@ -112,10 +112,10 @@ CREATE TABLE questions (
   questionID INT AUTO_INCREMENT PRIMARY KEY,
   assignmentID INT NOT NULL,
   questionText VARCHAR(255) NOT NULL,
-  questionType ENUM('Rating', 'Multiple Choice', 'Free Response') NOT NULL,
+  questionType ENUM('rating', 'multiple_choice', 'free_response') NOT NULL,
   questionOptions JSON,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID)
+  FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID) ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
 DROP TABLE IF EXISTS answers;
