@@ -4,7 +4,7 @@ CREATE DATABASE IF NOT EXISTS evaluation;
 USE evaluation;
 
 DROP TABLE IF EXISTS users;
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(255) NOT NULL UNIQUE,
   email VARCHAR(255) NOT NULL UNIQUE,
@@ -109,12 +109,11 @@ CREATE TABLE assignments (
 DROP TABLE IF EXISTS questions;
 
 CREATE TABLE questions (
-  questionID INT AUTO_INCREMENT PRIMARY KEY, -- Make questionID the primary key
+  questionID INT AUTO_INCREMENT PRIMARY KEY,
   assignmentID INT NOT NULL,
   questionText VARCHAR(255) NOT NULL,
-  questionType ENUM('Rating', 'Multiple Choice') NOT NULL,
-  questionOptions JSON NOT NULL,
-  ratingRange VARCHAR(20), 
+  questionType ENUM('Rating', 'Multiple Choice', 'Free Response') NOT NULL,
+  questionOptions JSON,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID)
 ) ENGINE = InnoDB;
@@ -122,10 +121,11 @@ CREATE TABLE questions (
 DROP TABLE IF EXISTS answers;
 
 CREATE TABLE answers (
-  answerID INT AUTO_INCREMENT PRIMARY KEY, -- Make questionID the primary key
+  answerID INT AUTO_INCREMENT PRIMARY KEY,
   questionID INT NOT NULL,
   studentUsername VARCHAR(255) NOT NULL,
-  studentAnswer JSON NOT NULL,
+  studentAnswer JSON,
+  ratingValue INT,
   submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (studentUsername) REFERENCES enrollments (studentUsername) ON DELETE CASCADE,
   FOREIGN KEY (questionID) REFERENCES questions (questionID) ON DELETE CASCADE

@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // 引入 useNavigation
+import { Picker } from '@react-native-picker/picker'; // 引入 Picker 组件
+import { useNavigation } from '@react-navigation/native';
 
 const EditAssignmentQuestion = () => {
   const navigation = useNavigation(); // 使用 navigation 来控制页面跳转
-  const [assignmentTitle, setAssignmentTitle] = useState(''); // 作业标题
   const [questions, setQuestions] = useState([]); // 存储所有题目
   const [questionText, setQuestionText] = useState(''); // 当前题目的文本
   const [questionType, setQuestionType] = useState('multiple_choice'); // 当前题目的类型
   const [options, setOptions] = useState(['', '', '', '']); // 存储选择题的选项
-  const [ratingRange, setRatingRange] = useState([0, 5]); // 打分题的范围
+  const [ratingRange, setRatingRange] = useState([1, 5]); // 打分题的范围
 
   // 添加题目到问题列表中
   const handleAddQuestion = () => {
@@ -38,7 +38,6 @@ const EditAssignmentQuestion = () => {
   // 保存整个作业并返回
   const handleSaveAssignment = () => {
     const assignment = {
-      title: assignmentTitle,
       questions: questions,
     };
 
@@ -61,14 +60,6 @@ const EditAssignmentQuestion = () => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.title}>Edit Assignment Questions</Text>
 
-        {/* 作业标题 */}
-        <TextInput
-          style={styles.input}
-          placeholder="Enter assignment title"
-          value={assignmentTitle}
-          onChangeText={setAssignmentTitle}
-        />
-
         {/* 问题文本输入 */}
         <TextInput
           style={styles.input}
@@ -78,19 +69,17 @@ const EditAssignmentQuestion = () => {
         />
 
         {/* 选择题目类型 */}
-        <View style={styles.typeSelector}>
-          <TouchableOpacity
-            style={[styles.typeButton, questionType === 'multiple_choice' && styles.selectedTypeButton]}
-            onPress={() => setQuestionType('multiple_choice')}
+        <View style={styles.dropdownContainer}>
+          <Text style={styles.sectionTitle}>Select Question Type</Text>
+          <Picker
+            selectedValue={questionType}
+            style={styles.picker}
+            onValueChange={(itemValue) => setQuestionType(itemValue)}
           >
-            <Text style={styles.typeButtonText}>Multiple Choice</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.typeButton, questionType === 'rating' && styles.selectedTypeButton]}
-            onPress={() => setQuestionType('rating')}
-          >
-            <Text style={styles.typeButtonText}>Rating</Text>
-          </TouchableOpacity>
+            <Picker.Item label="Multiple Choice" value="multiple_choice" />
+            <Picker.Item label="Rating" value="rating" />
+            <Picker.Item label="Free Response" value="free_response" />
+          </Picker>
         </View>
 
         {/* 如果是选择题，显示选项输入框 */}
@@ -116,6 +105,11 @@ const EditAssignmentQuestion = () => {
           </>
         )}
 
+        {/* Free Response 不需要额外的输入框，仅显示文本框 */}
+        {questionType === 'free_response' && (
+          <Text style={styles.sectionTitle}>This is a free response question.</Text>
+        )}
+
         {/* 添加问题按钮 */}
         <TouchableOpacity style={styles.addButton} onPress={handleAddQuestion}>
           <Text style={styles.addButtonText}>Add Question</Text>
@@ -134,6 +128,9 @@ const EditAssignmentQuestion = () => {
               )}
               {question.type === 'rating' && (
                 <Text>Rating Range: {question.range[0]} to {question.range[1]}</Text>
+              )}
+              {question.type === 'free_response' && (
+                <Text>Free Response Question</Text>
               )}
             </View>
           ))
@@ -170,26 +167,16 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
   },
-  typeSelector: {
-    flexDirection: 'row',
+  dropdownContainer: {
     marginBottom: 20,
   },
-  typeButton: {
-    flex: 1,
-    padding: 15,
+  picker: {
+    height: 50,
+    width: '100%',
     backgroundColor: '#f9f9f9',
     borderColor: '#B3A369',
     borderWidth: 1,
     borderRadius: 5,
-    marginHorizontal: 5,
-    alignItems: 'center',
-  },
-  selectedTypeButton: {
-    backgroundColor: '#B3A369',
-  },
-  typeButtonText: {
-    fontSize: 16,
-    color: '#333',
   },
   sectionTitle: {
     fontSize: 20,

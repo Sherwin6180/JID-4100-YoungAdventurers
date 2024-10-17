@@ -80,3 +80,59 @@ exports.removeAssignment = (req, res) => {
     }
   );
 };
+
+exports.addQuestion = (req, res) => {
+  const { assignmentID, questionText, questionType, questionOptions } = req.body;
+
+  if (!assignmentID || !questionText || !questionType) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  const options = questionType === 'Multiple Choice' ? JSON.stringify(questionOptions) : null;
+
+  db.query(
+    'INSERT INTO questions (assignmentID, questionText, questionType, questionOptions) VALUES (?, ?, ?, ?)',
+    [assignmentID, questionText, questionType, options],
+    (err, result) => {
+      if (err) {
+        return res.status(500).json({ message: 'Database error', error: err });
+      }
+
+      res.status(201).json({
+        message: 'Question added successfully!',
+        question: {
+          questionID: result.insertId,
+          assignmentID,
+          questionText,
+          questionType,
+          questionOptions: options,
+        }
+      });
+    }
+  );
+};
+
+exports.fetchQuestions = (req, res) => {
+  const { assignmentID } = req.params;
+
+  if (!assignmentID) {
+    return res.status(400).json({ message: 'Assignment ID is required.' });
+  }
+
+  db.query(
+    'SELECT questionID, questionText, questionType, questionOptions FROM questions WHERE assignmentID = ?',
+    [assignmentID],
+    (err, results) => {
+      if (err) {
+        console.error('Database error:', err);
+        return res.status(500).json({ message: 'Database error', error: err });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ message: 'No questions found for this assignment.' });
+      }
+
+      res.status(200).json({ questions: results });
+    }
+  );
+};
