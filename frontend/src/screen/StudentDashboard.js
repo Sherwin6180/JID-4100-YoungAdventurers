@@ -5,65 +5,56 @@ import { MaterialIcons } from '@expo/vector-icons'; // 使用 MaterialIcons 图�
 import config from '../../config';
 import { UserContext } from '../../UserContext';
 
-// const server = config.apiUrl; // 注释掉 API URL
+const server = config.apiUrl; // 注释掉 API URL
 
 const StudentDashboard = () => {
   const isFocused = useIsFocused();
   const navigation = useNavigation();
-  // const { username } = useContext(UserContext); // 注释掉从 context 获取 username
-  // const { setCourseID, setSemester } = useContext(UserContext); // 注释掉 setCourseID 和 setSemester
+  const { username } = useContext(UserContext); // 注释掉从 context 获取 username
+  const { setCourseID, setSemester } = useContext(UserContext); // 注释掉 setCourseID 和 setSemester
 
   // 当前课程列表和之前课程列表的状态
-  // const [currentCourses, setCurrentCourses] = useState([]);
-  // const [previousCourses, setPreviousCourses] = useState([]);
+  const [currentCourses, setCurrentCourses] = useState([]);
+  const [previousCourses, setPreviousCourses] = useState([]);
   const [isLoading, setIsLoading] = useState(false); // 将加载状态设置为 false
 
   useEffect(() => {
     if (isFocused) {
       // 这里我们注释掉 fetchCourses 函数的调用
-      // fetchCourses(); // 每次页面聚焦时获取最新课程数据
+      fetchCourses(); // 每次页面聚焦时获取最新课程数据
     }
   }, [isFocused]); // 依赖 isFocused
 
   // 暂时注释掉这个函数
-  // const fetchCourses = async () => {
-  //   setIsLoading(true); // 开始加载
-  //   try {
-  //     const response = await fetch(`${server}/api/student/getCoursesByStudent/${username}`);
-  //     const data = await response.json();
+  const fetchCourses = async () => {
+    setIsLoading(true); // 开始加载
+    try {
+      const response = await fetch(`${server}/api/student/getCoursesByStudent/${username}`);
+      const data = await response.json();
 
-  //     if (response.ok) {
-  //       const current = data.courses.filter(course => course.courseType === 'current');
-  //       const previous = data.courses.filter(course => course.courseType === 'previous');
-  //       setCurrentCourses(current);
-  //       setPreviousCourses(previous);
-  //     } else {
-  //       Alert.alert('Error', data.message || 'Failed to fetch courses');
-  //     }
-  //   } catch (error) {
-  //     console.log(error);
-  //     Alert.alert('Error', 'An error occurred while fetching courses.');
-  //   } finally {
-  //     setIsLoading(false); // 加载结束
-  //   }
-  // };
+      if (response.ok) {
+        const current = data.courses.filter(course => course.courseType === 'current');
+        const previous = data.courses.filter(course => course.courseType === 'previous');
+        setCurrentCourses(current);
+        setPreviousCourses(previous);
+      } else {
+        Alert.alert('Error', data.message || 'Failed to fetch courses');
+      }
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Error', 'An error occurred while fetching courses.');
+    } finally {
+      setIsLoading(false); // 加载结束
+    }
+  };
 
-  // 使用模拟数据代替数据库数据
-  const currentCourses = [
-    { courseID: '001', courseTitle: 'Math 101', semester: 'Fall 2024' },
-    { courseID: '002', courseTitle: 'History 202', semester: 'Fall 2024' },
-  ];
-
-  const previousCourses = [
-    { courseID: '003', courseTitle: 'Science 101', semester: 'Spring 2024' },
-    { courseID: '004', courseTitle: 'Art 101', semester: 'Spring 2024' },
-  ];
+  
 
   // 点击后跳转到课程详情页面，暂时不传递参数
-  const handleCourseClick = () => {
+  const handleCourseClick = (id, title, semester) => {
     // 注释掉参数传递部分，只进行页面跳转
-    // setCourseID(id);
-    // setSemester(semester);
+    setCourseID(id);
+    setSemester(semester);
     navigation.navigate('StudentCourseDetails'); // 不传递参数
   };
 
@@ -125,7 +116,7 @@ const StudentDashboard = () => {
                     <TouchableOpacity
                       key={course.courseID}
                       style={styles.courseCard}
-                      onPress={() => handleCourseClick()} // 点击时跳转，但不传递参数
+                      onPress={() => handleCourseClick(course.courseID, course.courseTitle, course.semester)}
                     >
                       <Text style={styles.courseTitle}>{course.courseTitle}</Text>
                     </TouchableOpacity>

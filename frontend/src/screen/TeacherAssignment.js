@@ -10,6 +10,7 @@ const server = config.apiUrl;
 const TeacherAssignment = () => {
   const navigation = useNavigation();
   const { courseID, semester, sectionID } = useContext(UserContext); // 从 UserContext 中获取 courseID, semester, sectionID
+  const { setAssignmentID } = useContext(UserContext);
 
   const [assignments, setAssignments] = useState([]);
   const [newAssignmentName, setNewAssignmentName] = useState(''); // 添加新作业名称
@@ -101,6 +102,7 @@ const TeacherAssignment = () => {
 
   // 点击作业卡片跳转到作业编辑页面
   const handleEditAssignment = (assignmentID, assignmentTitle) => {
+    setAssignmentID(assignmentID);
     navigation.navigate('TeacherEditAssignmentQuestion');
   };
 

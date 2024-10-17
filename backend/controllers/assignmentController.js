@@ -83,12 +83,13 @@ exports.removeAssignment = (req, res) => {
 
 exports.addQuestion = (req, res) => {
   const { assignmentID, questionText, questionType, questionOptions } = req.body;
+  console.log(`assignmentID: ${assignmentID}, questionText: ${questionText}, questionType: ${questionType}`)
 
   if (!assignmentID || !questionText || !questionType) {
     return res.status(400).json({ message: 'All fields are required.' });
   }
 
-  const options = questionType === 'Multiple Choice' ? JSON.stringify(questionOptions) : null;
+  const options = questionType === 'multiple_choice' ? JSON.stringify(questionOptions) : null;
 
   db.query(
     'INSERT INTO questions (assignmentID, questionText, questionType, questionOptions) VALUES (?, ?, ?, ?)',
