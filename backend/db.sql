@@ -103,6 +103,7 @@ CREATE TABLE assignments (
                 'Spring 2030', 'Summer 2030', 'Fall 2030') NOT NULL,
   sectionID VARCHAR(255) NOT NULL,
   assignmentTitle VARCHAR(255) NOT NULL,
+  dueDateTime DATETIME NOT NULL,
   FOREIGN KEY (courseID, semester, sectionID) REFERENCES sections (courseID, semester, sectionID)
 ) ENGINE = InnoDB;
 
