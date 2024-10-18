@@ -118,6 +118,7 @@ exports.addQuestion = (req, res) => {
   );
 };
 
+
 exports.fetchQuestions = (req, res) => {
   const { assignmentID } = req.params;
   console.log(assignmentID);
@@ -126,20 +127,29 @@ exports.fetchQuestions = (req, res) => {
     return res.status(400).json({ message: 'Assignment ID is required.' });
   }
 
-  db.query(
-    'SELECT questionID, questionText, questionType, questionOptions FROM questions WHERE assignmentID = ?',
-    [assignmentID],
-    (err, results) => {
-      if (err) {
-        console.error('Database error:', err);
-        return res.status(500).json({ message: 'Database error', error: err });
-      }
+  const query = `
+    SELECT q.questionID, q.questionText, q.questionType, q.questionOptions, a.assignmentTitle
+    FROM questions q
+    JOIN assignments a ON q.assignmentID = a.assignmentID
+    WHERE q.assignmentID = ?
+  `;
 
-      if (results.length === 0) {
-        return res.status(404).json({ message: 'No questions found for this assignment.' });
-      }
-
-      res.status(200).json({ questions: results });
+  db.query(query, [assignmentID], (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ message: 'Database error', error: err });
     }
-  );
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'No questions found for this assignment.' });
+    }
+
+    // Extract the assignmentTitle from the first row, since it's the same for all questions
+    const assignmentTitle = results[0].assignmentTitle;
+
+    // Remove the assignmentTitle from individual question objects to avoid redundancy
+    const questions = results.map(({ assignmentTitle, ...question }) => question);
+
+    res.status(200).json({ assignmentTitle, questions });
+  });
 };

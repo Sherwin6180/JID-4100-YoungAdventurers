@@ -65,10 +65,7 @@ const AssignmentDetail = () => {
       {question.questionOptions.map((option, index) => (
         <TouchableOpacity
           key={index}
-          style={[
-            styles.optionButton,
-            answers[question.questionID] === option && styles.selectedOption,
-          ]}
+          style={[styles.optionButton, answers[question.questionID] === option && styles.selectedOption]}
           onPress={() => handleMultipleChoiceAnswer(question.questionID, option)}
         >
           <Text style={styles.optionText}>{option}</Text>
@@ -82,13 +79,10 @@ const AssignmentDetail = () => {
     <View key={question.questionID} style={styles.questionContainer}>
       <Text style={styles.questionText}>{question.questionText}</Text>
       <View style={styles.ratingContainer}>
-        {[0, 1, 2, 3, 4, 5].map((score) => (
+        {[1, 2, 3, 4, 5].map((score) => (
           <TouchableOpacity
             key={score}
-            style={[
-              styles.ratingButton,
-              answers[question.questionID] === score && styles.selectedRating,
-            ]}
+            style={[styles.ratingButton, answers[question.questionID] === score && styles.selectedRating]}
             onPress={() => handleRatingAnswer(question.questionID, score)}
           >
             <Text style={styles.ratingText}>{score}</Text>
@@ -132,7 +126,8 @@ const AssignmentDetail = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>Assignment Questions</Text>
+        {/* 在页面顶部显示 assignmentTitle */}
+        <Text style={styles.title}>{assignment.assignmentTitle}</Text> 
 
         {/* 动态渲染所有问题 */}
         {assignment.questions.map((question) => {
@@ -198,6 +193,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   ratingContainer: {
+    marginHorizontal: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
