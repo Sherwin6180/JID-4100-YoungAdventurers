@@ -39,7 +39,6 @@ exports.createAssignment = (req, res) => {
 
 exports.fetchAssignments = (req, res) => {
   const { courseID, semester, sectionID } = req.params;
-
   if (!courseID || !semester || !sectionID) {
     return res.status(400).json({ message: 'Course ID, semester, and section ID are required.' });
   }

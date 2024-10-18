@@ -1,30 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { UserContext } from '../../UserContext'; // 从 UserContext 获取信息
+import config from '../../config'; // 假设后端 API 的 URL 配置在 config.js 中
+
+const server = config.apiUrl; // 服务器地址
 
 const AssignmentList = () => {
   const navigation = useNavigation();
   const [assignments, setAssignments] = useState([]); // 用于存储作业列表
 
+  const { courseID, semester, sectionID } = useContext(UserContext); // 从 UserContext 中读取 courseID, semester, sectionID
+
   // 使用 useEffect 在组件加载时加载作业列表
   useEffect(() => {
-    loadMockAssignments(); // 使用模拟数据
+    fetchAssignments(); // 获取作业列表
   }, []);
 
-  // 使用模拟数据
-  const loadMockAssignments = () => {
-    const mockData = [
-      { assignmentID: 'A101', title: 'Assignment 1: Intro to React', dueDate: '2024-10-15' },
-      { assignmentID: 'A102', title: 'Assignment 2: State and Props', dueDate: '2024-10-22' },
-      { assignmentID: 'A103', title: 'Assignment 3: Hooks', dueDate: '2024-10-29' },
-    ];
-    setAssignments(mockData); // 将模拟数据加载到 state 中
+  // 从后端 API 获取作业列表
+  const fetchAssignments = async () => {
+    try {
+      const response = await fetch(`${server}/api/assignment/fetchAssignments/${courseID}/${semester}/${sectionID}`); // 根据课程信息获取作业列表
+      const data = await response.json();
+
+      if (response.ok) {
+        setAssignments(data.assignments); // 设置获取到的作业数据
+      } else {
+        console.log('Failed to load assignments', data.message);
+      }
+    } catch (error) {
+      console.error('An error occurred while fetching assignments:', error);
+    }
   };
 
-  // 点击作业时显示一个 Alert
+  // 点击作业时跳转到作业页面
   const handleAssignmentClick = (assignmentID) => {
-    navigation.navigate('StudentDoAssignment'); // 不传递参数
+    navigation.navigate('StudentDoAssignment', { assignmentID }); // 传递 assignmentID
   };
 
   return (
@@ -79,8 +91,8 @@ const AssignmentList = () => {
                 style={styles.assignmentCard}
                 onPress={() => handleAssignmentClick(assignment.assignmentID)}
               >
-                <Text style={styles.assignmentTitle}>{assignment.title}</Text>
-                <Text style={styles.assignmentDueDate}>Due: {assignment.dueDate}</Text>
+                <Text style={styles.assignmentTitle}>{assignment.assignmentTitle}</Text>
+                <Text style={styles.assignmentDueDate}>Due: {new Date(assignment.dueDateTime).toLocaleString()}</Text>
               </TouchableOpacity>
             ))
           )}
