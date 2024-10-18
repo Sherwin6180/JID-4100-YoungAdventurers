@@ -10,23 +10,31 @@ const AssignmentDetail = () => {
   const navigation = useNavigation();
   const [assignment, setAssignment] = useState(null); // 作业数据
   const [answers, setAnswers] = useState({}); // 存储学生的答案
-  const { assignmentID } = useContext(UserContext); // 从 context 中获取 assignmentID
+  const { assignmentID, username } = useContext(UserContext); // 从 context 中获取 assignmentID 和 username
 
   // 使用 useEffect 获取作业题目
   useEffect(() => {
-    fetchAssignment(); // 获取作业题目
+    fetchAssignment(); // 获取作业题目和现有的回答
   }, []);
 
-  // 获取作业数据
+  // 获取作业数据和学生的现有答案
   const fetchAssignment = async () => {
     try {
-      const response = await fetch(`${server}/api/assignment/fetchQuestions/${assignmentID}`);
+      const response = await fetch(`${server}/api/student/getStudentAnswers/${assignmentID}/${username}`);
       const data = await response.json();
 
       if (response.ok) {
-        setAssignment(data); // 设置作业数据为返回的整个对象
+        if (data.questions && data.questions.length > 0) {
+          setAssignment(data); // 设置作业数据为返回的整个对象
+          const initialAnswers = data.questions.reduce((acc, question) => {
+            acc[question.questionID] = question.studentAnswer || ''; // 初始化每个问题的答案
+            return acc;
+          }, {});
+          setAnswers(initialAnswers); // 设置现有的学生答案
+        }
       } else {
         Alert.alert('Error', data.message || 'Failed to fetch assignment.');
+        navigation.goBack();
       }
     } catch (error) {
       console.error('Error fetching assignment:', error);
@@ -64,7 +72,7 @@ const AssignmentDetail = () => {
       <Text style={styles.questionText}>{question.questionText}</Text>
       {question.questionOptions.map((option, index) => (
         <TouchableOpacity
-          key={index}
+          key={`${question.questionID}-${index}`} // 确保 key 是唯一的
           style={[styles.optionButton, answers[question.questionID] === option && styles.selectedOption]}
           onPress={() => handleMultipleChoiceAnswer(question.questionID, option)}
         >
@@ -81,7 +89,7 @@ const AssignmentDetail = () => {
       <View style={styles.ratingContainer}>
         {[1, 2, 3, 4, 5].map((score) => (
           <TouchableOpacity
-            key={score}
+            key={`${question.questionID}-${score}`} // 确保 key 是唯一的
             style={[styles.ratingButton, answers[question.questionID] === score && styles.selectedRating]}
             onPress={() => handleRatingAnswer(question.questionID, score)}
           >
@@ -105,22 +113,65 @@ const AssignmentDetail = () => {
     </View>
   );
 
-  // 保存答案并返回
-  const handleSaveAndExit = () => {
-    console.log('Saved Answers:', answers);
-    // 这里可以将保存的答案存入数据库或本地存储
-    navigation.goBack(); // 返回上一个页面
+  // 保存答案
+  const handleSaveAndExit = async () => {
+    try {
+      const response = await fetch(`${server}/api/student/saveStudentAnswers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assignmentID,
+          studentUsername: username,
+          answers,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Answers saved successfully.');
+        navigation.goBack(); // 返回上一个页面
+      } else {
+        Alert.alert('Error', data.message || 'Failed to save answers.');
+      }
+    } catch (error) {
+      console.error('Error saving answers:', error);
+      Alert.alert('Error', 'An error occurred while saving the answers.');
+    }
   };
 
   // 提交答案并返回
-  const handleSubmitAndExit = () => {
-    console.log('Submitted Answers:', answers);
-    // 这里可以将答案提交到服务器
-    navigation.goBack(); // 返回上一个页面
+  const handleSubmitAndExit = async () => {
+    try {
+      const response = await fetch(`${server}/api/student/submitStudentAnswers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assignmentID,
+          studentUsername: username,
+          answers,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Assignment submitted successfully.');
+        navigation.goBack(); // 返回上一个页面
+      } else {
+        Alert.alert('Error', data.message || 'Failed to submit assignment.');
+      }
+    } catch (error) {
+      console.error('Error submitting assignment:', error);
+      Alert.alert('Error', 'An error occurred while submitting the assignment.');
+    }
   };
 
+
   if (!assignment) {
-    return <Text>Loading assignment...</Text>; // 显示加载状态
+    return <Text></Text>; // 显示加载状态
   }
 
   return (

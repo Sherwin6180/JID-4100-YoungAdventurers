@@ -121,7 +121,6 @@ exports.addQuestion = (req, res) => {
 
 exports.fetchQuestions = (req, res) => {
   const { assignmentID } = req.params;
-  console.log(assignmentID);
 
   if (!assignmentID) {
     return res.status(400).json({ message: 'Assignment ID is required.' });
