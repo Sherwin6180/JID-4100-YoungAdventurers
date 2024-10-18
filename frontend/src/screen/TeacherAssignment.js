@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { SafeAreaView, StatusBar, View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MaterialIcons } from '@expo/vector-icons'; 
+import { MaterialIcons } from '@expo/vector-icons';
+import DateTimePickerModal from 'react-native-modal-datetime-picker'; // Import the modal picker
 import { UserContext } from '../../UserContext'; // 引入 UserContext
 import config from '../../config';
 
@@ -14,6 +15,10 @@ const TeacherAssignment = () => {
 
   const [assignments, setAssignments] = useState([]);
   const [newAssignmentName, setNewAssignmentName] = useState(''); // 添加新作业名称
+  const currentDate = new Date();
+  const defaultDateTime = new Date(currentDate.setHours(23, 59, 59));
+  const [dueDateTime, setDueDateTime] = useState(new Date()); // 选择截止日期时间
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false); // 控制日期选择器的显示
 
   // 在组件加载时获取当前课程的作业列表
   useEffect(() => {
@@ -45,6 +50,7 @@ const TeacherAssignment = () => {
     }
 
     try {
+      console.log(dueDateTime);
       const response = await fetch(`${server}/api/assignment/createAssignment`, {
         method: 'POST',
         headers: {
@@ -55,16 +61,16 @@ const TeacherAssignment = () => {
           semester,
           sectionID,
           assignmentTitle: newAssignmentName,
+          dueDateTime: dueDateTime.toLocaleString(), // 发送截止日期和时间
         }),
       });
 
       const data = await response.json();
       if (response.ok) {
         Alert.alert('Success', 'Assignment added successfully!');
-        
-        // Ensure that the new assignment includes the assignmentID returned by the backend
         setAssignments([...assignments, data.assignment]); // 更新作业列表
         setNewAssignmentName(''); // 清空输入框
+        setDueDateTime(new Date()); // 重置日期时间
       } else {
         Alert.alert('Error', data.message || 'Failed to add assignment.');
       }
@@ -101,9 +107,25 @@ const TeacherAssignment = () => {
   };
 
   // 点击作业卡片跳转到作业编辑页面
-  const handleEditAssignment = (assignmentID, assignmentTitle) => {
+  const handleEditAssignment = (assignmentID) => {
     setAssignmentID(assignmentID);
     navigation.navigate('TeacherEditAssignmentQuestion');
+  };
+
+  // 显示日期选择器
+  const showDatePicker = () => {
+    setDatePickerVisibility(true);
+  };
+
+  // 隐藏日期选择器
+  const hideDatePicker = () => {
+    setDatePickerVisibility(false);
+  };
+
+  // 确认日期选择
+  const handleConfirm = (date) => {
+    setDueDateTime(date); // 设置日期时间
+    hideDatePicker(); // 关闭选择器
   };
 
   return (
@@ -139,9 +161,10 @@ const TeacherAssignment = () => {
               <TouchableOpacity
                 key={assignment.assignmentID}
                 style={styles.assignmentCard}
-                onPress={() => handleEditAssignment(assignment.assignmentID, assignment.assignmentTitle)}
+                onPress={() => handleEditAssignment(assignment.assignmentID)}
               >
                 <Text style={styles.assignmentName}>{assignment.assignmentTitle}</Text>
+                <Text style={styles.dueDate}>Due: {new Date(assignment.dueDateTime).toLocaleString()}</Text>
                 <TouchableOpacity
                   style={styles.removeButton}
                   onPress={() => removeAssignment(assignment.assignmentID)} // Call removeAssignment with correct title
@@ -159,6 +182,19 @@ const TeacherAssignment = () => {
             value={newAssignmentName}
             onChangeText={setNewAssignmentName}
           />
+          <TouchableOpacity style={styles.datePickerButton} onPress={showDatePicker}>
+            <Text style={styles.buttonText}>Pick Due Date & Time</Text>
+          </TouchableOpacity>
+
+          {/* 日期时间选择器 */}
+          <DateTimePickerModal
+            isVisible={isDatePickerVisible}
+            mode="datetime"
+            date={defaultDateTime}
+            onConfirm={handleConfirm}
+            onCancel={hideDatePicker}
+          />
+
           <TouchableOpacity style={styles.addButton} onPress={addAssignment}>
             <Text style={styles.buttonText}>Add Assignment</Text>
           </TouchableOpacity>
@@ -218,6 +254,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     flex: 1, // 使文本占据剩余空间
   },
+  dueDate: {
+    fontSize: 14,
+    color: 'gray',
+  },
   removeButton: {
     padding: 10,
   },
@@ -235,6 +275,13 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
     marginBottom: 20,
+  },
+  datePickerButton: {
+    padding: 15,
+    backgroundColor: '#B3A369',
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
   },
   buttonText: {
     color: '#fff',

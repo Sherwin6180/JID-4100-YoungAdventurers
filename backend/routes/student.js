@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const studentController = require('../controllers/studentController');
 
-router.get('/getCoursesByStudent/:studentUsername', studentController.getCoursesByStudent);
+router.get('/getSectionsByStudent/:studentUsername', studentController.getSectionsByStudent);
 
 
 module.exports = router;

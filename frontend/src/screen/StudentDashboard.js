@@ -5,13 +5,12 @@ import { MaterialIcons } from '@expo/vector-icons'; // 使用 MaterialIcons 图�
 import config from '../../config';
 import { UserContext } from '../../UserContext';
 
-const server = config.apiUrl; // 注释掉 API URL
+const server = config.apiUrl;
 
 const StudentDashboard = () => {
   const isFocused = useIsFocused();
   const navigation = useNavigation();
-  const { username } = useContext(UserContext); // 注释掉从 context 获取 username
-  const { setCourseID, setSemester } = useContext(UserContext); // 注释掉 setCourseID 和 setSemester
+  const { username, setCourseID, setSemester, setSectionID } = useContext(UserContext); // 获取 sectionID, courseID, semester
 
   // 当前课程列表和之前课程列表的状态
   const [currentCourses, setCurrentCourses] = useState([]);
@@ -20,42 +19,38 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     if (isFocused) {
-      // 这里我们注释掉 fetchCourses 函数的调用
       fetchCourses(); // 每次页面聚焦时获取最新课程数据
     }
-  }, [isFocused]); // 依赖 isFocused
+  }, [isFocused]);
 
-  // 暂时注释掉这个函数
   const fetchCourses = async () => {
     setIsLoading(true); // 开始加载
     try {
-      const response = await fetch(`${server}/api/student/getCoursesByStudent/${username}`);
+      const response = await fetch(`${server}/api/student/getSectionsByStudent/${username}`);
       const data = await response.json();
 
       if (response.ok) {
-        const current = data.courses.filter(course => course.courseType === 'current');
-        const previous = data.courses.filter(course => course.courseType === 'previous');
+        const current = data.sections.filter(section => section.courseType === 'current');
+        const previous = data.sections.filter(section => section.courseType === 'previous');
         setCurrentCourses(current);
         setPreviousCourses(previous);
       } else {
-        Alert.alert('Error', data.message || 'Failed to fetch courses');
+        Alert.alert('Error', data.message || 'Failed to fetch sections');
       }
     } catch (error) {
       console.log(error);
-      Alert.alert('Error', 'An error occurred while fetching courses.');
+      Alert.alert('Error', 'An error occurred while fetching sections.');
     } finally {
       setIsLoading(false); // 加载结束
     }
   };
 
-  
-
-  // 点击后跳转到课程详情页面，暂时不传递参数
-  const handleCourseClick = (id, title, semester) => {
-    // 注释掉参数传递部分，只进行页面跳转
-    setCourseID(id);
+  // 点击后跳转到课程详情页面，设置 courseID、semester 和 sectionID
+  const handleCourseClick = (courseID, sectionID, semester) => {
+    setCourseID(courseID);
     setSemester(semester);
-    navigation.navigate('StudentCourseDetails'); // 不传递参数
+    setSectionID(sectionID);
+    navigation.navigate('StudentCourseDetails');
   };
 
   return (
@@ -66,9 +61,9 @@ const StudentDashboard = () => {
         {/* 左边的图标列 */}
         <View style={styles.iconColumn}>
           <View>
-            {/* Dashboard 图标 (无缝衔接右边内容) */}
+            {/* Dashboard 图标 */}
             <TouchableOpacity
-              style={[styles.iconButton, styles.activeIconButton]} // 这里设置无缝衔接的背景色
+              style={[styles.iconButton, styles.activeIconButton]}
               disabled={true} // 在 Dashboard 页面禁用 Dashboard 图标
             >
               <MaterialIcons name="dashboard" size={30} color="gray" />
@@ -114,11 +109,14 @@ const StudentDashboard = () => {
                 <View style={styles.courseContainer}>
                   {currentCourses.map((course) => (
                     <TouchableOpacity
-                      key={course.courseID}
+                      key={course.courseID + '-' + course.sectionID}
                       style={styles.courseCard}
-                      onPress={() => handleCourseClick(course.courseID, course.courseTitle, course.semester)}
+                      onPress={() => handleCourseClick(course.courseID, course.sectionID, course.semester)}
                     >
-                      <Text style={styles.courseTitle}>{course.courseTitle}</Text>
+                      <Text style={styles.courseTitle}>
+                        {`${course.courseID}-${course.sectionID}`}
+                      </Text>
+                      <Text style={styles.courseDescription}>{course.courseTitle}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -132,11 +130,14 @@ const StudentDashboard = () => {
                 <View style={styles.courseContainer}>
                   {previousCourses.map((course) => (
                     <TouchableOpacity
-                      key={course.courseID}
+                      key={course.courseID + '-' + course.sectionID}
                       style={styles.courseCard}
-                      onPress={() => handleCourseClick()} // 点击时跳转，但不传递参数
+                      onPress={() => handleCourseClick(course.courseID, course.sectionID, course.semester)}
                     >
-                      <Text style={styles.courseTitle}>{course.courseTitle}</Text>
+                      <Text style={styles.courseTitle}>
+                        {`${course.courseID}-${course.sectionID}`}
+                      </Text>
+                      <Text style={styles.courseDescription}>{course.courseTitle}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
@@ -161,7 +162,7 @@ const styles = StyleSheet.create({
   },
   iconColumn: {
     width: 60,
-    backgroundColor: '#B3A369', // 左侧图标列的背景颜色
+    backgroundColor: '#B3A369',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
     width: '100%', // 确保图标占据整个列宽，实现无缝连接
   },
   bottomIcons: {
-    marginTop: 'auto', // 将 Back 和 Logout 图标推到底部
+    marginTop: 'auto',
   },
   container: {
     flexGrow: 1,
@@ -202,13 +203,17 @@ const styles = StyleSheet.create({
     borderColor: '#B3A369',
     borderRadius: 8,
     marginBottom: 20,
-    backgroundColor: '#f9f9f9', // 与左侧保持一致
+    backgroundColor: '#f9f9f9',
     width: '45%',
     marginHorizontal: '2.5%',
   },
   courseTitle: {
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  courseDescription: {
+    fontSize: 16,
+    color: '#666',
   },
   courseContainer: {
     flexDirection: 'row',
