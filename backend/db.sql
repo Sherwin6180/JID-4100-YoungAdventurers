@@ -128,6 +128,21 @@ CREATE TABLE answers (
   studentAnswer JSON,
   ratingValue INT,
   submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY (questionID, studentUsername),
   FOREIGN KEY (studentUsername) REFERENCES enrollments (studentUsername) ON DELETE CASCADE,
   FOREIGN KEY (questionID) REFERENCES questions (questionID) ON DELETE CASCADE
 ) ENGINE = InnoDB;
+
+DROP TABLE IF EXISTS student_submission;
+
+CREATE TABLE student_submission (
+  submissionID INT AUTO_INCREMENT PRIMARY KEY,
+  assignmentID INT NOT NULL,
+  studentUsername VARCHAR(255) NOT NULL,
+  status ENUM('in_progress', 'submitted') DEFAULT 'in_progress',
+  last_saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  submitted_at TIMESTAMP,
+  UNIQUE KEY unique_submission (assignmentID, studentUsername),
+  FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID) ON DELETE CASCADE,
+  FOREIGN KEY (studentUsername) REFERENCES enrollments (studentUsername) ON DELETE CASCADE
+) ENGINE=InnoDB;

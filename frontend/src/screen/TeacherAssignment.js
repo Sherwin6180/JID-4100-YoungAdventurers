@@ -124,6 +124,7 @@ const TeacherAssignment = () => {
 
   // 确认日期选择
   const handleConfirm = (date) => {
+    date.setSeconds(59); // 将秒数设置为 59
     setDueDateTime(date); // 设置日期时间
     hideDatePicker(); // 关闭选择器
   };
@@ -204,7 +205,6 @@ const TeacherAssignment = () => {
   );
 };
 
-// 样式定义保持不变
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -241,9 +241,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   assignmentCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column', // 修改为列布局
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
     padding: 15,
     marginBottom: 10,
     borderWidth: 1,
@@ -252,13 +252,18 @@ const styles = StyleSheet.create({
   },
   assignmentName: {
     fontSize: 16,
-    flex: 1, // 使文本占据剩余空间
+    fontWeight: 'bold', // 作业名称加粗
+    marginBottom: 5, // 为作业名称和截止日期之间添加间距
+    color: '#333', // 确保字体颜色清晰
   },
   dueDate: {
     fontSize: 14,
     color: 'gray',
   },
   removeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10, // 删除按钮放置在右上角
     padding: 10,
   },
   input: {
@@ -289,5 +294,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+
 
 export default TeacherAssignment;

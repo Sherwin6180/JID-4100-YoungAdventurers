@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker'; // 引入 Picker 组件
 import { useNavigation } from '@react-navigation/native';
 import { UserContext } from '../../UserContext'; // 引入 UserContext
@@ -109,8 +109,8 @@ const EditAssignmentQuestion = () => {
         />
 
         {/* 选择题目类型 */}
-        <View style={styles.dropdownContainer}>
-          <Text style={styles.sectionTitle}>Select Question Type</Text>
+        <Text style={styles.sectionTitle}>Select Question Type</Text>
+        <View style={styles.pickerContainer}>
           <Picker
             selectedValue={questionType}
             style={styles.picker}
@@ -121,6 +121,8 @@ const EditAssignmentQuestion = () => {
             <Picker.Item label="Free Response" value="free_response" />
           </Picker>
         </View>
+        {/* <View style={styles.dropdownContainer}>
+        </View> */}
 
         {/* 如果是选择题，显示选项输入框 */}
         {questionType === 'multiple_choice' && (
@@ -204,13 +206,12 @@ const styles = StyleSheet.create({
   dropdownContainer: {
     marginBottom: 20,
   },
-  picker: {
-    height: 50,
-    width: '100%',
-    backgroundColor: '#f9f9f9',
-    borderColor: '#B3A369',
+  pickerContainer: {
+    marginBottom: 20,
     borderWidth: 1,
+    borderColor: '#B3A369',
     borderRadius: 5,
+    overflow: 'hidden'
   },
   sectionTitle: {
     fontSize: 20,

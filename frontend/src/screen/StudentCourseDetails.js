@@ -12,6 +12,7 @@ const AssignmentList = () => {
   const [assignments, setAssignments] = useState([]); // 用于存储作业列表
 
   const { courseID, semester, sectionID } = useContext(UserContext); // 从 UserContext 中读取 courseID, semester, sectionID
+  const { setAssignmentID } = useContext(UserContext);
 
   // 使用 useEffect 在组件加载时加载作业列表
   useEffect(() => {
@@ -36,6 +37,7 @@ const AssignmentList = () => {
 
   // 点击作业时跳转到作业页面
   const handleAssignmentClick = (assignmentID) => {
+    setAssignmentID(assignmentID);
     navigation.navigate('StudentDoAssignment', { assignmentID }); // 传递 assignmentID
   };
 

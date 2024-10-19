@@ -1,50 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { UserContext } from '../../UserContext'; // 引入 UserContext
+import config from '../../config';
+
+const server = config.apiUrl;
 
 const AssignmentDetail = () => {
-  const navigation = useNavigation();  // 用于页面导航
-  const [assignment, setAssignment] = useState(null);  // 作业数据
-  const [answers, setAnswers] = useState({});  // 存储学生的答案
+  const navigation = useNavigation();
+  const [assignment, setAssignment] = useState(null); // 作业数据
+  const [answers, setAnswers] = useState({}); // 存储学生的答案
+  const { assignmentID, username } = useContext(UserContext); // 从 context 中获取 assignmentID 和 username
 
-  // 模拟从数据库获取作业数据的过程
+  // 使用 useEffect 获取作业题目
   useEffect(() => {
-    fetchAssignment(); // 模拟获取作业
+    fetchAssignment(); // 获取作业题目和现有的回答
   }, []);
 
-  // 模拟数据库调用获取作业数据
-  const fetchAssignment = () => {
-    // 假设从数据库获取的数据结构
-    const fetchedAssignment = {
-      assignmentID: 'A101',
-      title: 'Assignment 1: React Basics',
-      questions: [
-        {
-          questionID: 'Q1',
-          questionText: 'What is the main purpose of React?',
-          type: 'multiple_choice',
-          options: ['State Management', 'Data Fetching', 'UI Building', 'Routing'],
-        },
-        {
-          questionID: 'Q2',
-          questionText: 'How would you rate your understanding of React components?',
-          type: 'rating',
-        },
-        {
-          questionID: 'Q3',
-          questionText: 'Which of the following is a hook in React?',
-          type: 'multiple_choice',
-          options: ['useState', 'useEffect', 'useFetch', 'useRouter'],
-        },
-        {
-          questionID: 'Q4',
-          questionText: 'How confident are you in handling state in React?',
-          type: 'rating',
-        },
-      ],
-    };
+  // 获取作业数据和学生的现有答案
+  const fetchAssignment = async () => {
+    try {
+      const response = await fetch(`${server}/api/student/getStudentAnswers/${assignmentID}/${username}`);
+      const data = await response.json();
 
-    setAssignment(fetchedAssignment); // 设置模拟的作业数据
+      if (response.ok) {
+        if (data.questions && data.questions.length > 0) {
+          setAssignment(data); // 设置作业数据为返回的整个对象
+          const initialAnswers = data.questions.reduce((acc, question) => {
+            acc[question.questionID] = question.studentAnswer || ''; // 初始化每个问题的答案
+            return acc;
+          }, {});
+          setAnswers(initialAnswers); // 设置现有的学生答案
+        }
+      } else {
+        Alert.alert('Error', data.message || 'Failed to fetch assignment.');
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error('Error fetching assignment:', error);
+      Alert.alert('Error', 'An error occurred while fetching the assignment.');
+    }
   };
 
   // 处理选择题答案
@@ -63,17 +58,22 @@ const AssignmentDetail = () => {
     }));
   };
 
+  // 处理自由回答答案
+  const handleFreeResponseAnswer = (questionID, text) => {
+    setAnswers((prevAnswers) => ({
+      ...prevAnswers,
+      [questionID]: text,
+    }));
+  };
+
   // 渲染选择题
   const renderMultipleChoiceQuestion = (question) => (
     <View key={question.questionID} style={styles.questionContainer}>
       <Text style={styles.questionText}>{question.questionText}</Text>
-      {question.options.map((option, index) => (
+      {question.questionOptions.map((option, index) => (
         <TouchableOpacity
-          key={index}
-          style={[
-            styles.optionButton,
-            answers[question.questionID] === option && styles.selectedOption,
-          ]}
+          key={`${question.questionID}-${index}`} // 确保 key 是唯一的
+          style={[styles.optionButton, answers[question.questionID] === option && styles.selectedOption]}
           onPress={() => handleMultipleChoiceAnswer(question.questionID, option)}
         >
           <Text style={styles.optionText}>{option}</Text>
@@ -87,13 +87,10 @@ const AssignmentDetail = () => {
     <View key={question.questionID} style={styles.questionContainer}>
       <Text style={styles.questionText}>{question.questionText}</Text>
       <View style={styles.ratingContainer}>
-        {[0, 1, 2, 3, 4, 5].map((score) => (
+        {[1, 2, 3, 4, 5].map((score) => (
           <TouchableOpacity
-            key={score}
-            style={[
-              styles.ratingButton,
-              answers[question.questionID] === score && styles.selectedRating,
-            ]}
+            key={`${question.questionID}-${score}`} // 确保 key 是唯一的
+            style={[styles.ratingButton, answers[question.questionID] === score && styles.selectedRating]}
             onPress={() => handleRatingAnswer(question.questionID, score)}
           >
             <Text style={styles.ratingText}>{score}</Text>
@@ -103,35 +100,94 @@ const AssignmentDetail = () => {
     </View>
   );
 
-  // 保存答案并返回
-  const handleSaveAndExit = () => {
-    console.log('Saved Answers:', answers);
-    // 这里可以将保存的答案存入数据库或本地存储
-    navigation.goBack(); // 返回上一个页面
+  // 渲染自由回答题
+  const renderFreeResponseQuestion = (question) => (
+    <View key={question.questionID} style={styles.questionContainer}>
+      <Text style={styles.questionText}>{question.questionText}</Text>
+      <TextInput
+        style={styles.freeResponseInput}
+        multiline
+        value={answers[question.questionID] || ''}
+        onChangeText={(text) => handleFreeResponseAnswer(question.questionID, text)}
+      />
+    </View>
+  );
+
+  // 保存答案
+  const handleSaveAndExit = async () => {
+    try {
+      const response = await fetch(`${server}/api/student/saveStudentAnswers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assignmentID,
+          studentUsername: username,
+          answers,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Answers saved successfully.');
+        navigation.goBack(); // 返回上一个页面
+      } else {
+        Alert.alert('Error', data.message || 'Failed to save answers.');
+      }
+    } catch (error) {
+      console.error('Error saving answers:', error);
+      Alert.alert('Error', 'An error occurred while saving the answers.');
+    }
   };
 
   // 提交答案并返回
-  const handleSubmitAndExit = () => {
-    console.log('Submitted Answers:', answers);
-    // 在这里可以将答案发送到服务器，或进一步处理
-    navigation.goBack(); // 返回上一个页面
+  const handleSubmitAndExit = async () => {
+    try {
+      const response = await fetch(`${server}/api/student/submitStudentAnswers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assignmentID,
+          studentUsername: username,
+          answers,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Assignment submitted successfully.');
+        navigation.goBack(); // 返回上一个页面
+      } else {
+        Alert.alert('Error', data.message || 'Failed to submit assignment.');
+      }
+    } catch (error) {
+      console.error('Error submitting assignment:', error);
+      Alert.alert('Error', 'An error occurred while submitting the assignment.');
+    }
   };
 
+
   if (!assignment) {
-    return <Text>Loading assignment...</Text>;  // 如果没有作业数据，显示加载状态
+    return <Text></Text>; // 显示加载状态
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.title}>{assignment.title}</Text>
-        
+        {/* 在页面顶部显示 assignmentTitle */}
+        <Text style={styles.title}>{assignment.assignmentTitle}</Text> 
+
         {/* 动态渲染所有问题 */}
         {assignment.questions.map((question) => {
-          if (question.type === 'multiple_choice') {
+          if (question.questionType === 'multiple_choice') {
             return renderMultipleChoiceQuestion(question);
-          } else if (question.type === 'rating') {
+          } else if (question.questionType === 'rating') {
             return renderRatingQuestion(question);
+          } else if (question.questionType === 'free_response') {
+            return renderFreeResponseQuestion(question);
           }
           return null;
         })}
@@ -188,6 +244,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   ratingContainer: {
+    marginHorizontal: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
@@ -205,6 +262,15 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 16,
+  },
+  freeResponseInput: {
+    padding: 10,
+    borderColor: '#B3A369',
+    borderWidth: 1,
+    borderRadius: 5,
+    backgroundColor: '#f9f9f9',
+    minHeight: 60,
+    textAlignVertical: 'top',
   },
   saveButton: {
     padding: 15,
