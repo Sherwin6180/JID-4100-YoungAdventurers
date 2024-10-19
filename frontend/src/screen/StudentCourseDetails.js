@@ -11,18 +11,24 @@ const AssignmentList = () => {
   const navigation = useNavigation();
   const [assignments, setAssignments] = useState([]); // 用于存储作业列表
 
-  const { courseID, semester, sectionID } = useContext(UserContext); // 从 UserContext 中读取 courseID, semester, sectionID
+  const { courseID, semester, sectionID, username } = useContext(UserContext); // 从 UserContext 中读取 username, courseID, semester, sectionID
   const { setAssignmentID } = useContext(UserContext);
 
-  // 使用 useEffect 在组件加载时加载作业列表
+  // 使用 useEffect 加载作业列表并在页面 focus 时重新加载
   useEffect(() => {
-    fetchAssignments(); // 获取作业列表
-  }, []);
+    // 监听页面焦点事件，确保每次用户回到页面时刷新作业列表
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchAssignments(); // 获取作业列表
+    });
+
+    // 清除监听器
+    return unsubscribe;
+  }, [navigation]);
 
   // 从后端 API 获取作业列表
   const fetchAssignments = async () => {
     try {
-      const response = await fetch(`${server}/api/assignment/fetchAssignments/${courseID}/${semester}/${sectionID}`); // 根据课程信息获取作业列表
+      const response = await fetch(`${server}/api/student/fetchAssignments/${username}/${courseID}/${semester}/${sectionID}`); // 根据课程信息获取作业列表
       const data = await response.json();
 
       if (response.ok) {
@@ -97,7 +103,7 @@ const AssignmentList = () => {
                 <Text style={styles.assignmentDueDate}>Due: {new Date(assignment.dueDateTime).toLocaleString()}</Text>
                 {/* 显示作业的完成状态 */}
                 <Text style={styles.assignmentStatus}>
-                  Status: {assignment.completionStatus === 'complete' ? 'Complete' : 'Incomplete'}
+                  Status: {assignment.status.replace("_", " ")}
                 </Text>
               </TouchableOpacity>
             ))
