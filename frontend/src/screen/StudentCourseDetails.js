@@ -95,6 +95,10 @@ const AssignmentList = () => {
               >
                 <Text style={styles.assignmentTitle}>{assignment.assignmentTitle}</Text>
                 <Text style={styles.assignmentDueDate}>Due: {new Date(assignment.dueDateTime).toLocaleString()}</Text>
+                {/* 显示作业的完成状态 */}
+                <Text style={styles.assignmentStatus}>
+                  Status: {assignment.completionStatus === 'complete' ? 'Complete' : 'Incomplete'}
+                </Text>
               </TouchableOpacity>
             ))
           )}
@@ -155,6 +159,11 @@ const styles = StyleSheet.create({
   assignmentDueDate: {
     fontSize: 14,
     color: '#666',
+  },
+  assignmentStatus: {
+    fontSize: 14,
+    marginTop: 5,
+    color: '#666', // 你可以根据状态再动态调整颜色
   },
 });
 

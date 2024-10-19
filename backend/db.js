@@ -7,7 +7,8 @@ const db = mysql.createConnection({
   port     : '3306',
   user     : 'root',
   // password : '12345678',
-  password: 'letsmakeithappen', // Yuanhong local password test
+  //password: 'letsmakeithappen', // Xinyu local password test
+  password: '863902025',
   database: 'evaluation'
 });
 
