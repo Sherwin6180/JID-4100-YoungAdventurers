@@ -33,7 +33,7 @@ const AssignmentDetail = () => {
 
         {/* 硬编码的 Last Modified 时间 */}
         <Text style={styles.lastModified}>
-          Last modified: 2024-10-18 21:00:00
+          Last modified/submitted at: 2024-10-18 21:00:00
         </Text>
 
         {/* 动态渲染所有问题 */}
