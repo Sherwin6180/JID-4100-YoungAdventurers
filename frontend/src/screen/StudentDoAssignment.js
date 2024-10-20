@@ -10,6 +10,8 @@ const AssignmentDetail = () => {
   const navigation = useNavigation();
   const [assignment, setAssignment] = useState(null); // 作业数据
   const [answers, setAnswers] = useState({}); // 存储学生的答案
+  const [status, setStatus] = useState('in_progress'); // 存储作业状态
+  const [lastSaved, setLastSaved] = useState(''); // 存储最后保存时间
   const { assignmentID, username } = useContext(UserContext); // 从 context 中获取 assignmentID 和 username
 
   // 使用 useEffect 获取作业题目
@@ -31,6 +33,8 @@ const AssignmentDetail = () => {
             return acc;
           }, {});
           setAnswers(initialAnswers); // 设置现有的学生答案
+          setStatus(data.status); // 设置作业状态
+          setLastSaved(new Date(data.lastSavedAt).toLocaleString()); // 设置最后保存时间
         }
       } else {
         Alert.alert('Error', data.message || 'Failed to fetch assignment.');
@@ -44,6 +48,7 @@ const AssignmentDetail = () => {
 
   // 处理选择题答案
   const handleMultipleChoiceAnswer = (questionID, answer) => {
+    if (status === 'submitted') return; // 已提交作业，答案只读
     setAnswers((prevAnswers) => ({
       ...prevAnswers,
       [questionID]: answer,
@@ -52,6 +57,7 @@ const AssignmentDetail = () => {
 
   // 处理打分题答案
   const handleRatingAnswer = (questionID, rating) => {
+    if (status === 'submitted') return; // 已提交作业，答案只读
     setAnswers((prevAnswers) => ({
       ...prevAnswers,
       [questionID]: rating,
@@ -60,6 +66,7 @@ const AssignmentDetail = () => {
 
   // 处理自由回答答案
   const handleFreeResponseAnswer = (questionID, text) => {
+    if (status === 'submitted') return; // 已提交作业，答案只读
     setAnswers((prevAnswers) => ({
       ...prevAnswers,
       [questionID]: text,
@@ -75,6 +82,7 @@ const AssignmentDetail = () => {
           key={`${question.questionID}-${index}`} // 确保 key 是唯一的
           style={[styles.optionButton, answers[question.questionID] === option && styles.selectedOption]}
           onPress={() => handleMultipleChoiceAnswer(question.questionID, option)}
+          disabled={status === 'submitted'} // 如果状态是 submitted，禁用按钮
         >
           <Text style={styles.optionText}>{option}</Text>
         </TouchableOpacity>
@@ -92,6 +100,7 @@ const AssignmentDetail = () => {
             key={`${question.questionID}-${score}`} // 确保 key 是唯一的
             style={[styles.ratingButton, answers[question.questionID] === score && styles.selectedRating]}
             onPress={() => handleRatingAnswer(question.questionID, score)}
+            disabled={status === 'submitted'} // 如果状态是 submitted，禁用按钮
           >
             <Text style={styles.ratingText}>{score}</Text>
           </TouchableOpacity>
@@ -109,6 +118,7 @@ const AssignmentDetail = () => {
         multiline
         value={answers[question.questionID] || ''}
         onChangeText={(text) => handleFreeResponseAnswer(question.questionID, text)}
+        editable={status !== 'submitted'} // 如果状态是 submitted，禁用输入框
       />
     </View>
   );
@@ -141,8 +151,27 @@ const AssignmentDetail = () => {
     }
   };
 
+  // 检查所有问题是否都有答案
+  const allQuestionsAnswered = () => {
+    return assignment.questions.every((question) => {
+      const answer = answers[question.questionID];
+      if (question.questionType === 'multiple_choice' || question.questionType === 'rating') {
+        return answer !== ''; // 对于选择题和打分题，确保答案不是空字符串
+      } else if (question.questionType === 'free_response') {
+        return answer && answer.trim() !== ''; // 对于自由回答题，确保答案不是空白
+      }
+      return false;
+    });
+  };
+
   // 提交答案并返回
   const handleSubmitAndExit = async () => {
+    // 检查是否所有问题都已作答
+    if (!allQuestionsAnswered()) {
+      Alert.alert('Incomplete Submission', 'Please answer all questions before submitting.');
+      return; // 阻止提交
+    }
+
     try {
       const response = await fetch(`${server}/api/student/submitStudentAnswers`, {
         method: 'POST',
@@ -178,9 +207,14 @@ const AssignmentDetail = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {/* 在页面顶部显示 assignmentTitle */}
-        <Text style={styles.title}>{assignment.assignmentTitle}</Text> 
-        {/* 硬编码的 Last Modified 时间 */}
-        <Text style={styles.lastModified}>Last modified: 2024-10-18 21:00:00</Text>
+        <Text style={styles.title}>{assignment.assignmentTitle}</Text>
+        {/* 显示 last_saved_at 或 submitted_at */}
+        {status === 'submitted' ? (
+          <Text style={styles.lastModified}>Submitted at: {new Date(assignment.submittedAt).toLocaleString()}</Text>
+        ) : (
+          <Text style={styles.lastModified}>Last saved: {lastSaved}</Text>
+        )}
+        
         {/* 动态渲染所有问题 */}
         {assignment.questions.map((question) => {
           if (question.questionType === 'multiple_choice') {
@@ -193,15 +227,23 @@ const AssignmentDetail = () => {
           return null;
         })}
 
-        {/* 保存并退出按钮 */}
-        <TouchableOpacity style={styles.saveButton} onPress={handleSaveAndExit}>
-          <Text style={styles.saveButtonText}>Save and Exit</Text>
-        </TouchableOpacity>
+        {/* 保存并退出按钮, 提交并退出按钮 */}
+        {status === 'in_progress' ? (
+          <>
+            <TouchableOpacity style={styles.saveButton} onPress={handleSaveAndExit}>
+              <Text style={styles.saveButtonText}>Save and Exit</Text>
+            </TouchableOpacity>
 
-        {/* 提交并退出按钮 */}
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmitAndExit}>
-          <Text style={styles.submitButtonText}>Submit and Exit</Text>
-        </TouchableOpacity>
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmitAndExit}>
+              <Text style={styles.submitButtonText}>Submit and Exit</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          // 如果作业已经提交，显示返回按钮
+          <TouchableOpacity style={styles.returnButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.returnButtonText}>Return</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -301,7 +343,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  returnButton: {
+    padding: 15,
+    backgroundColor: '#B3A369',
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  returnButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
 
 export default AssignmentDetail;
-

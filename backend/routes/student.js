@@ -6,5 +6,6 @@ router.get('/getSectionsByStudent/:studentUsername', studentController.getSectio
 router.get('/getStudentAnswers/:assignmentID/:studentUsername', studentController.getStudentAnswers);
 router.post('/saveStudentAnswers', studentController.saveStudentAnswers);
 router.post('/submitStudentAnswers', studentController.submitStudentAnswers);
+router.get('/fetchAssignments/:studentUsername/:courseID/:semester/:sectionID', studentController.fetchAssignments);
 
 module.exports = router;
