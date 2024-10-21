@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { SafeAreaView, StatusBar, View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MaterialIcons } from '@expo/vector-icons'; 
+import { MaterialIcons } from '@expo/vector-icons';
+import DateTimePickerModal from 'react-native-modal-datetime-picker'; // Import the modal picker
 import { UserContext } from '../../UserContext'; // 引入 UserContext
 import config from '../../config';
 
@@ -10,9 +11,14 @@ const server = config.apiUrl;
 const TeacherAssignment = () => {
   const navigation = useNavigation();
   const { courseID, semester, sectionID } = useContext(UserContext); // 从 UserContext 中获取 courseID, semester, sectionID
+  const { setAssignmentID } = useContext(UserContext);
 
   const [assignments, setAssignments] = useState([]);
   const [newAssignmentName, setNewAssignmentName] = useState(''); // 添加新作业名称
+  const currentDate = new Date();
+  const defaultDateTime = new Date(currentDate.setHours(23, 59, 59));
+  const [dueDateTime, setDueDateTime] = useState(new Date()); // 选择截止日期时间
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false); // 控制日期选择器的显示
 
   // 在组件加载时获取当前课程的作业列表
   useEffect(() => {
@@ -44,6 +50,7 @@ const TeacherAssignment = () => {
     }
 
     try {
+      console.log(dueDateTime);
       const response = await fetch(`${server}/api/assignment/createAssignment`, {
         method: 'POST',
         headers: {
@@ -54,16 +61,16 @@ const TeacherAssignment = () => {
           semester,
           sectionID,
           assignmentTitle: newAssignmentName,
+          dueDateTime: dueDateTime.toLocaleString(), // 发送截止日期和时间
         }),
       });
 
       const data = await response.json();
       if (response.ok) {
         Alert.alert('Success', 'Assignment added successfully!');
-        
-        // Ensure that the new assignment includes the assignmentID returned by the backend
         setAssignments([...assignments, data.assignment]); // 更新作业列表
         setNewAssignmentName(''); // 清空输入框
+        setDueDateTime(new Date()); // 重置日期时间
       } else {
         Alert.alert('Error', data.message || 'Failed to add assignment.');
       }
@@ -99,6 +106,28 @@ const TeacherAssignment = () => {
     }
   };
 
+  // 点击作业卡片跳转到作业编辑页面
+  const handleEditAssignment = (assignmentID) => {
+    setAssignmentID(assignmentID);
+    navigation.navigate('TeacherEditAssignmentQuestion');
+  };
+
+  // 显示日期选择器
+  const showDatePicker = () => {
+    setDatePickerVisibility(true);
+  };
+
+  // 隐藏日期选择器
+  const hideDatePicker = () => {
+    setDatePickerVisibility(false);
+  };
+
+  // 确认日期选择
+  const handleConfirm = (date) => {
+    date.setSeconds(59); // 将秒数设置为 59
+    setDueDateTime(date); // 设置日期时间
+    hideDatePicker(); // 关闭选择器
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -130,18 +159,22 @@ const TeacherAssignment = () => {
           <Text style={styles.subTitle}>Current Assignments:</Text>
           {assignments.map((assignment) => (
             assignment && assignment.assignmentTitle ? (
-              <View key={assignment.assignmentID} style={styles.assignmentCard}>
+              <TouchableOpacity
+                key={assignment.assignmentID}
+                style={styles.assignmentCard}
+                onPress={() => handleEditAssignment(assignment.assignmentID)}
+              >
                 <Text style={styles.assignmentName}>{assignment.assignmentTitle}</Text>
+                <Text style={styles.dueDate}>Due: {new Date(assignment.dueDateTime).toLocaleString()}</Text>
                 <TouchableOpacity
                   style={styles.removeButton}
                   onPress={() => removeAssignment(assignment.assignmentID)} // Call removeAssignment with correct title
                 >
                   <MaterialIcons name="delete" size={24} color="red" />
                 </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
             ) : null // If assignment data is incomplete, don't render
           ))}
-
 
           {/* 输入新作业的名称并添加 */}
           <TextInput
@@ -150,6 +183,19 @@ const TeacherAssignment = () => {
             value={newAssignmentName}
             onChangeText={setNewAssignmentName}
           />
+          <TouchableOpacity style={styles.datePickerButton} onPress={showDatePicker}>
+            <Text style={styles.buttonText}>Pick Due Date & Time</Text>
+          </TouchableOpacity>
+
+          {/* 日期时间选择器 */}
+          <DateTimePickerModal
+            isVisible={isDatePickerVisible}
+            mode="datetime"
+            date={defaultDateTime}
+            onConfirm={handleConfirm}
+            onCancel={hideDatePicker}
+          />
+
           <TouchableOpacity style={styles.addButton} onPress={addAssignment}>
             <Text style={styles.buttonText}>Add Assignment</Text>
           </TouchableOpacity>
@@ -159,7 +205,6 @@ const TeacherAssignment = () => {
   );
 };
 
-// 样式定义保持不变
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -196,9 +241,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   assignmentCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column', // 修改为列布局
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
     padding: 15,
     marginBottom: 10,
     borderWidth: 1,
@@ -207,8 +252,18 @@ const styles = StyleSheet.create({
   },
   assignmentName: {
     fontSize: 16,
+    fontWeight: 'bold', // 作业名称加粗
+    marginBottom: 5, // 为作业名称和截止日期之间添加间距
+    color: '#333', // 确保字体颜色清晰
+  },
+  dueDate: {
+    fontSize: 14,
+    color: 'gray',
   },
   removeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10, // 删除按钮放置在右上角
     padding: 10,
   },
   input: {
@@ -226,11 +281,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  datePickerButton: {
+    padding: 15,
+    backgroundColor: '#B3A369',
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
 });
+
 
 export default TeacherAssignment;

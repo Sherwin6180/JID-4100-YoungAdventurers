@@ -62,6 +62,21 @@ git push origin <branch-name>
 * Navigate back to the "Conversation" tab and merge the pull request
 
 # Release Notes
+## v0.3.0
+### New Features
+* Implemented the front-end UI for the student dashboard page.
+* Implemented the front-end UI for the course assignment page.
+* Implemented the front-end UI for the student-to-do-assignment page.
+* Implemented the front-end UI for the teacher edit and post assignment page.
+* Implemented RESTful APIs for creating, posting, and finishing assignments.
+* Implemented APIs to fetch all assignments for a specific student.
+* Connect student dashboard, course assignment, student do-assignment page, and teacher posting-assignment page to the backend database.
+### Bug Fixes
+* The issue of student users not being able to return to the dashboard after saving an unfinished assignment has been resolved.
+* Page transitions are now visually smooth.
+### Known Issues
+* Sliding the page causes unexpected returns.
+* AWS crashes
 ## v0.2.0
 ### New Features
 * Implemented the front-end UI for the dashboard page.

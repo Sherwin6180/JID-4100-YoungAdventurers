@@ -4,7 +4,7 @@ CREATE DATABASE IF NOT EXISTS evaluation;
 USE evaluation;
 
 DROP TABLE IF EXISTS users;
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(255) NOT NULL UNIQUE,
   email VARCHAR(255) NOT NULL UNIQUE,
@@ -103,5 +103,46 @@ CREATE TABLE assignments (
                 'Spring 2030', 'Summer 2030', 'Fall 2030') NOT NULL,
   sectionID VARCHAR(255) NOT NULL,
   assignmentTitle VARCHAR(255) NOT NULL,
+  dueDateTime DATETIME NOT NULL,
   FOREIGN KEY (courseID, semester, sectionID) REFERENCES sections (courseID, semester, sectionID)
 ) ENGINE = InnoDB;
+
+DROP TABLE IF EXISTS questions;
+
+CREATE TABLE questions (
+  questionID INT AUTO_INCREMENT PRIMARY KEY,
+  assignmentID INT NOT NULL,
+  questionText VARCHAR(255) NOT NULL,
+  questionType ENUM('rating', 'multiple_choice', 'free_response') NOT NULL,
+  questionOptions JSON,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID) ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+DROP TABLE IF EXISTS answers;
+
+CREATE TABLE answers (
+  answerID INT AUTO_INCREMENT PRIMARY KEY,
+  questionID INT NOT NULL,
+  studentUsername VARCHAR(255) NOT NULL,
+  studentAnswer JSON,
+  ratingValue INT,
+  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY (questionID, studentUsername),
+  FOREIGN KEY (studentUsername) REFERENCES enrollments (studentUsername) ON DELETE CASCADE,
+  FOREIGN KEY (questionID) REFERENCES questions (questionID) ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+DROP TABLE IF EXISTS student_submission;
+
+CREATE TABLE student_submission (
+  submissionID INT AUTO_INCREMENT PRIMARY KEY,
+  assignmentID INT NOT NULL,
+  studentUsername VARCHAR(255) NOT NULL,
+  status ENUM('in_progress', 'submitted') DEFAULT 'in_progress',
+  last_saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  submitted_at TIMESTAMP,
+  UNIQUE KEY unique_submission (assignmentID, studentUsername),
+  FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID) ON DELETE CASCADE,
+  FOREIGN KEY (studentUsername) REFERENCES enrollments (studentUsername) ON DELETE CASCADE
+) ENGINE=InnoDB;

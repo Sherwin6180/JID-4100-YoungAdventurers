@@ -74,11 +74,14 @@ exports.getStudentAnswers = (req, res) => {
     }));
 
     res.status(200).json({ assignmentTitle, status, lastSavedAt, submittedAt, questions });
+
   });
 };
 
 exports.saveStudentAnswers = (req, res) => {
   const { assignmentID, studentUsername, answers } = req.body;
+  console.log(req.body);
+
   
   if (!assignmentID || !studentUsername || !answers) {
     return res.status(400).json({ message: 'Assignment ID, Student Username, and Answers are required.' });
