@@ -30,7 +30,6 @@ exports.getSectionsByStudent = (req, res) => {
 
 exports.getStudentAnswers = (req, res) => {
   const { assignmentID, studentUsername } = req.params;
-  console.log(`assignmentID: ${assignmentID}, studentUsername: ${studentUsername}`);
   
   if (!assignmentID || !studentUsername) {
     return res.status(400).json({ message: 'Assignment ID and Student Username are required.' });
@@ -40,14 +39,16 @@ exports.getStudentAnswers = (req, res) => {
     SELECT q.questionID, q.questionText, q.questionType, q.questionOptions, 
            IFNULL(a.studentAnswer, NULL) AS studentAnswer, 
            IFNULL(a.ratingValue, NULL) AS ratingValue,
-           ass.assignmentTitle
+           ass.assignmentTitle,
+           sub.status, sub.last_saved_at, sub.submitted_at
     FROM questions q
     LEFT JOIN answers a ON q.questionID = a.questionID AND a.studentUsername = ?
     INNER JOIN assignments ass ON q.assignmentID = ass.assignmentID
+    LEFT JOIN student_submission sub ON sub.assignmentID = ass.assignmentID AND sub.studentUsername = ?
     WHERE q.assignmentID = ?
   `;
 
-  db.query(query, [studentUsername, assignmentID], (err, results) => {
+  db.query(query, [studentUsername, studentUsername, assignmentID], (err, results) => {
     if (err) {
       console.error('Database error:', err);
       return res.status(500).json({ message: 'Database error', error: err });
@@ -58,6 +59,10 @@ exports.getStudentAnswers = (req, res) => {
     }
 
     const assignmentTitle = results[0].assignmentTitle;
+    const status = results[0].status || 'in_progress'; // Default to 'in_progress' if no status is found
+    const lastSavedAt = results[0].last_saved_at || null;
+    console.log(new Date(lastSavedAt).toLocaleString());
+    const submittedAt = results[0].submitted_at || null; // Might be null if not submitted
 
     const questions = results.map((row) => ({
       questionID: row.questionID,
@@ -68,13 +73,15 @@ exports.getStudentAnswers = (req, res) => {
       ratingValue: row.ratingValue || null
     }));
 
-    res.status(200).json({ assignmentTitle, questions });
+    res.status(200).json({ assignmentTitle, status, lastSavedAt, submittedAt, questions });
+
   });
 };
 
 exports.saveStudentAnswers = (req, res) => {
   const { assignmentID, studentUsername, answers } = req.body;
   console.log(req.body);
+
   
   if (!assignmentID || !studentUsername || !answers) {
     return res.status(400).json({ message: 'Assignment ID, Student Username, and Answers are required.' });
@@ -180,4 +187,40 @@ exports.submitStudentAnswers = (req, res) => {
     .catch((err) => {
       res.status(500).json({ message: 'Database error during submission', error: err });
     });
+};
+
+exports.fetchAssignments = (req, res) => {
+  const { studentUsername, courseID, semester, sectionID } = req.params;
+
+  if (!studentUsername || !courseID || !semester || !sectionID) {
+    return res.status(400).json({ message: 'All parameters (studentUsername, courseID, semester, sectionID) are required.' });
+  }
+
+  const query = `
+    SELECT 
+      a.assignmentID, 
+      a.assignmentTitle, 
+      a.dueDateTime, 
+      COALESCE(ss.status, 'not_attempted') AS status -- Default to 'not_attempted' if no submission is found
+    FROM assignments a
+    LEFT JOIN student_submission ss 
+      ON a.assignmentID = ss.assignmentID 
+      AND ss.studentUsername = ?
+    WHERE a.courseID = ? 
+      AND a.semester = ? 
+      AND a.sectionID = ?
+  `;
+
+  db.query(query, [studentUsername, courseID, semester, sectionID], (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ message: 'Database error', error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'No assignments found for this section.' });
+    }
+
+    res.status(200).json({ assignments: results });
+  });
 };
