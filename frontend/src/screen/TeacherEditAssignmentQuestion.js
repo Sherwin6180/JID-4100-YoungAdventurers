@@ -1,34 +1,34 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
-import { Picker } from '@react-native-picker/picker'; // 引入 Picker 组件
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Switch } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
-import { UserContext } from '../../UserContext'; // 引入 UserContext
+import { UserContext } from '../../UserContext';
 import config from '../../config';
 
 const server = config.apiUrl;
 
 const EditAssignmentQuestion = () => {
-  const navigation = useNavigation(); // 使用 navigation 来控制页面跳转
-  const [questions, setQuestions] = useState([]); // 存储所有题目
-  const [questionText, setQuestionText] = useState(''); // 当前题目的文本
-  const [questionType, setQuestionType] = useState('multiple_choice'); // 当前题目的类型
-  const [options, setOptions] = useState(['', '', '', '']); // 存储选择题的选项
-  const [ratingRange, setRatingRange] = useState([1, 5]); // 打分题的范围
-  const { assignmentID } = useContext(UserContext); // 从 context 中获取 assignmentID
+  const navigation = useNavigation();
+  const [questions, setQuestions] = useState([]);
+  const [questionText, setQuestionText] = useState('');
+  const [questionType, setQuestionType] = useState('multiple_choice');
+  const [options, setOptions] = useState(['', '', '', '']);
+  const [ratingRange, setRatingRange] = useState([1, 5]);
+  const [includeEvaluateGoal, setIncludeEvaluateGoal] = useState(false);
+  const [goalStage, setGoalStage] = useState('');
+  const { assignmentID } = useContext(UserContext);
 
-  // Fetch questions from the server when the component loads
   useEffect(() => {
     fetchQuestions();
   }, []);
 
-  // Fetch questions from the server
   const fetchQuestions = async () => {
     try {
       const response = await fetch(`${server}/api/assignment/fetchQuestions/${assignmentID}`);
       const data = await response.json();
 
       if (response.ok) {
-        setQuestions(data.questions); // 将获取到的问题设置到 state 中
+        setQuestions(data.questions);
       } else {
         Alert.alert('Error', data.message || 'Failed to fetch questions');
       }
@@ -38,7 +38,6 @@ const EditAssignmentQuestion = () => {
     }
   };
 
-  // 添加题目并将其发送到服务器
   const handleAddQuestion = async () => {
     if (!questionText) {
       Alert.alert('Error', 'Please enter the question text.');
@@ -52,7 +51,6 @@ const EditAssignmentQuestion = () => {
       ratingRange: questionType === 'rating' ? ratingRange : null,
     };
 
-    // 构造要发送给 API 的 payload
     const payload = {
       assignmentID,
       questionText: newQuestion.questionText,
@@ -77,10 +75,9 @@ const EditAssignmentQuestion = () => {
         return;
       }
 
-      // 添加问题到列表并重置输入框
       setQuestions([...questions, newQuestion]);
-      setQuestionText(''); // 清空输入框
-      setOptions(['', '', '', '']); // 重置选项
+      setQuestionText('');
+      setOptions(['', '', '', '']);
       Alert.alert('Success', 'Question added successfully!');
     } catch (error) {
       console.error(error);
@@ -88,7 +85,6 @@ const EditAssignmentQuestion = () => {
     }
   };
 
-  // 更新选择题的选项
   const handleOptionChange = (index, text) => {
     const newOptions = [...options];
     newOptions[index] = text;
@@ -99,6 +95,35 @@ const EditAssignmentQuestion = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.title}>Edit Assignment Questions</Text>
+
+        {/* 是否包含 evaluate goal 类型的问题 */}
+        <View style={styles.switchContainer}>
+          <Text style={styles.sectionTitle}>Include Evaluate Goal?</Text>
+          <Switch
+            value={includeEvaluateGoal}
+            onValueChange={(value) => {
+              setIncludeEvaluateGoal(value);
+              if (!value) setGoalStage('');
+            }}
+          />
+        </View>
+
+        {/* 输入评估阶段编号 */}
+        {includeEvaluateGoal && (
+          <View style={styles.goalStageContainer}>
+            <Text style={styles.label}>Enter Goal Stage</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter stage number"
+              value={goalStage}
+              keyboardType="numeric"
+              onChangeText={setGoalStage}
+            />
+          </View>
+        )}
+
+        {/* 更明显的分割线 */}
+        <View style={styles.divider} />
 
         {/* 问题文本输入 */}
         <TextInput
@@ -121,8 +146,6 @@ const EditAssignmentQuestion = () => {
             <Picker.Item label="Free Response" value="free_response" />
           </Picker>
         </View>
-        {/* <View style={styles.dropdownContainer}>
-        </View> */}
 
         {/* 如果是选择题，显示选项输入框 */}
         {questionType === 'multiple_choice' && (
@@ -142,9 +165,7 @@ const EditAssignmentQuestion = () => {
 
         {/* 如果是打分题，显示打分范围 */}
         {questionType === 'rating' && (
-          <>
-            <Text style={styles.sectionTitle}>Rating Range: {ratingRange[0]} to {ratingRange[1]}</Text>
-          </>
+          <Text style={styles.sectionTitle}>Rating Range: {ratingRange[0]} to {ratingRange[1]}</Text>
         )}
 
         {/* Free Response 不需要额外的输入框，仅显示文本框 */}
@@ -195,6 +216,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  goalStageContainer: {
+    marginTop: 5,
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 18,
+  },
   input: {
     padding: 15,
     backgroundColor: '#f9f9f9',
@@ -203,8 +236,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
   },
-  dropdownContainer: {
-    marginBottom: 20,
+  divider: {
+    height: 2, // 增加分割线高度
+    backgroundColor: '#444', // 使用更深的颜色
+    marginVertical: 20,
+    marginHorizontal: 10, // 增加左右的间距
   },
   pickerContainer: {
     marginBottom: 20,
@@ -220,7 +256,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     padding: 15,
-    backgroundColor: '#FFCC00', // 添加问题按钮的颜色
+    backgroundColor: '#FFCC00',
     borderRadius: 5,
     alignItems: 'center',
     marginBottom: 20,
