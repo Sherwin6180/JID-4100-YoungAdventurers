@@ -41,14 +41,18 @@ const AssignmentList = () => {
     }
   };
 
-  // 点击 assignment 时展开或收起
+  // 点击 assignment 时的处理
   const handleAssignmentClick = (assignmentID, hasEvaluateGoal) => {
-    if (expandedAssignment === assignmentID) {
-      setExpandedAssignment(null); // 如果已展开则关闭
-    } else if (hasEvaluateGoal) {
-      setExpandedAssignment(assignmentID); // 如果有 evaluate goal 则展开
+    if (hasEvaluateGoal) {
+      // 如果有 evaluate goal，则展开或收起其他组
+      if (expandedAssignment === assignmentID) {
+        setExpandedAssignment(null); // 如果已展开则关闭
+      } else {
+        setExpandedAssignment(assignmentID); // 展开其他组选择
+      }
     } else {
-      navigateToAssignment(assignmentID); // 否则直接导航
+      // 没有 evaluate goal 时直接跳转到 StudentDoAssignment
+      navigateToAssignment(assignmentID);
     }
   };
 
@@ -56,6 +60,12 @@ const AssignmentList = () => {
   const navigateToAssignment = (assignmentID) => {
     setAssignmentID(assignmentID);
     navigation.navigate('StudentDoAssignment', { assignmentID });
+  };
+
+  // 跳转至选择人员页面
+  const navigateToAssignmentChoosePerson = (assignmentID, groupID) => {
+    setAssignmentID(assignmentID);
+    navigation.navigate('StudentDoAssignmentChoosePerson', { assignmentID, groupID });
   };
 
   return (
@@ -126,7 +136,7 @@ const AssignmentList = () => {
                       <TouchableOpacity
                         key={group.id}
                         style={styles.groupButton}
-                        onPress={() => navigateToAssignment(assignment.assignmentID)}
+                        onPress={() => navigateToAssignmentChoosePerson(assignment.assignmentID, group.id)}
                       >
                         <Text style={styles.groupButtonText}>{group.name}</Text>
                       </TouchableOpacity>
