@@ -3,26 +3,30 @@ import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet, Tex
 import { useNavigation } from '@react-navigation/native';
 import { UserContext } from '../../UserContext';
 
+const includeEvaluateGoal = true; // 是否启用 evaluation goal
+
 const AssignmentDetail = () => {
   const navigation = useNavigation();
   const [assignment, setAssignment] = useState(null);
-  const [answers, setAnswers] = useState({}); // 当前学生的答案
+  const [answers, setAnswers] = useState({});
   const [status, setStatus] = useState('in_progress');
   const [lastSaved, setLastSaved] = useState('');
   const { assignmentID, username } = useContext(UserContext);
 
-  const [groupMembers, setGroupMembers] = useState([
-    { username: 'member1', firstName: 'Alice', lastName: 'Johnson', goal: 'Complete project design' },
-    { username: 'member2', firstName: 'Bob', lastName: 'Brown', goal: 'Implement core features' },
-    { username: 'member3', firstName: 'Carol', lastName: 'Davis', goal: 'Test and debug' }
-  ]);
-  const [selectedMember, setSelectedMember] = useState(null);
+  const [selectedMember, setSelectedMember] = useState({
+    username: 'member1',
+    firstName: 'Alice',
+    lastName: 'Johnson',
+    goal: 'Complete project design'
+  });
+
   const [memberRatings, setMemberRatings] = useState({});
   const [goalRatings, setGoalRatings] = useState({});
   const [localAssignmentResults, setLocalAssignmentResults] = useState({});
 
   useEffect(() => {
     fetchAssignment();
+    loadSavedData();
   }, []);
 
   const fetchAssignment = async () => {
@@ -36,7 +40,6 @@ const AssignmentDetail = () => {
         { questionID: "q2", questionText: "Did the team communicate effectively?", questionType: "multiple_choice", questionOptions: ["Yes", "No"] },
         { questionID: "q3", questionText: "Describe any challenges faced by the team.", questionType: "free_response" }
       ],
-      includeEvaluateGoal: true,
       evaluateStage: 1
     };
     setAssignment(simulatedAssignment);
@@ -44,10 +47,17 @@ const AssignmentDetail = () => {
     setLastSaved(new Date(simulatedAssignment.lastSavedAt).toLocaleString());
   };
 
+  const loadSavedData = () => {
+    const savedData = localAssignmentResults[selectedMember.username] || {};
+    setAnswers(savedData.answers || {});
+    setMemberRatings({ [selectedMember.username]: savedData.ratings || null });
+    setGoalRatings({ [selectedMember.username]: savedData.goalRating || null });
+  };
+
   const handleSaveAndExit = () => {
     setLastSaved(new Date().toLocaleString());
     Alert.alert("Saved", "Your answers have been saved.");
-    navigation.goBack();
+    navigation.navigate(includeEvaluateGoal ? 'StudentDoAssignmentChoosePerson' : 'StudentCourseDetails');
   };
 
   const handleSubmitAndExit = () => {
@@ -63,46 +73,7 @@ const AssignmentDetail = () => {
 
     setStatus('submitted');
     Alert.alert("Submitted", "Your assignment has been submitted.");
-    navigation.goBack();
-  };
-
-  const handleSelectMember = (member) => {
-    if (selectedMember?.username === member.username) {
-      setSelectedMember(null);
-      return;
-    }
-
-    setSelectedMember(member);
-    const savedData = localAssignmentResults[member.username] || {};
-    setAnswers(savedData.answers || {});
-    setMemberRatings({ [member.username]: savedData.ratings || null });
-    setGoalRatings({ [member.username]: savedData.goalRating || null });
-  };
-
-  const handleConfirmMemberRatings = () => {
-    const allQuestionsAnswered = assignment.questions.every((question) => {
-      const answer = answers[question.questionID];
-      return question.questionType !== "free_response" ? answer : answer?.trim() !== '';
-    });
-
-    if (!allQuestionsAnswered) {
-      Alert.alert("Incomplete", "Please answer all questions before confirming.");
-      return;
-    }
-
-    if (selectedMember) {
-      const newResults = {
-        ...localAssignmentResults,
-        [selectedMember.username]: {
-          ratings: memberRatings[selectedMember.username],
-          goalRating: goalRatings[selectedMember.username],
-          answers,
-        }
-      };
-      setLocalAssignmentResults(newResults);
-      setSelectedMember(null);
-      Alert.alert("Saved", "This member's responses have been saved.");
-    }
+    navigation.navigate(includeEvaluateGoal ? 'StudentDoAssignmentChoosePerson' : 'StudentCourseDetails');
   };
 
   const handleMemberRating = (username, rating) => {
@@ -144,25 +115,6 @@ const AssignmentDetail = () => {
       [questionID]: text,
     }));
   };
-
-  const renderGroupGoals = () => (
-    <View style={styles.groupContainer}>
-      <Text style={styles.sectionTitle}>Evaluate Group Goals (Stage {assignment.evaluateStage})</Text>
-      {groupMembers.map((member) => (
-        <TouchableOpacity
-          key={member.username}
-          style={[
-            styles.memberContainer,
-            selectedMember?.username === member.username && styles.selectedMember,
-            localAssignmentResults[member.username] && styles.completedMember
-          ]}
-          onPress={() => handleSelectMember(member)}
-        >
-          <Text style={styles.memberName}>{member.firstName} {member.lastName}</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
 
   const renderMultipleChoiceQuestion = (question) => (
     <View key={question.questionID} style={styles.questionContainer}>
@@ -243,27 +195,18 @@ const AssignmentDetail = () => {
           <Text style={styles.lastModified}>Last saved: {lastSaved}</Text>
         )}
 
-        {assignment.includeEvaluateGoal && renderGroupGoals()}
+        {includeEvaluateGoal && renderEvaluationGoal()}
 
-        {selectedMember && (
-          <View style={styles.memberEvaluationContainer}>
-            <Text>Evaluating {selectedMember.firstName} {selectedMember.lastName}</Text>
-            {assignment.questions.map((question) => {
-              if (question.questionType === 'multiple_choice') {
-                return renderMultipleChoiceQuestion(question);
-              } else if (question.questionType === 'rating') {
-                return renderRatingQuestion(question);
-              } else if (question.questionType === 'free_response') {
-                return renderFreeResponseQuestion(question);
-              }
-              return null;
-            })}
-            {renderEvaluationGoal()}
-            <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmMemberRatings}>
-              <Text style={styles.confirmButtonText}>Confirm</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        {assignment.questions.map((question) => {
+          if (question.questionType === 'multiple_choice') {
+            return renderMultipleChoiceQuestion(question);
+          } else if (question.questionType === 'rating') {
+            return renderRatingQuestion(question);
+          } else if (question.questionType === 'free_response') {
+            return renderFreeResponseQuestion(question);
+          }
+          return null;
+        })}
 
         {status === 'in_progress' ? (
           <>
@@ -275,7 +218,7 @@ const AssignmentDetail = () => {
             </TouchableOpacity>
           </>
         ) : (
-          <TouchableOpacity style={styles.returnButton} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={styles.returnButton} onPress={() => navigation.navigate('StudentDoAssignmentChoosePerson')}>
             <Text style={styles.returnButtonText}>Return</Text>
           </TouchableOpacity>
         )}
@@ -284,6 +227,7 @@ const AssignmentDetail = () => {
   );
 };
 
+// 样式定义
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -301,40 +245,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginVertical: 10,
-  },
-  groupContainer: {
-    marginBottom: 20,
-  },
-  memberContainer: {
-    padding: 10,
-    backgroundColor: '#f0f0f0',
-    borderColor: '#B3A369',
-    borderWidth: 1,
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  completedMember: {
-    backgroundColor: '#d0f0d0',
-  },
-  selectedMember: {
-    backgroundColor: '#e3e3e3',
-  },
-  memberName: {
-    fontSize: 16,
-  },
-  memberEvaluationContainer: {
-    marginTop: 15,
-    marginBottom: 20,
-    padding: 15,
-    borderColor: '#B3A369',
-    borderWidth: 1,
-    borderRadius: 5,
-    backgroundColor: '#f9f9f9',
   },
   questionContainer: {
     marginBottom: 20,
@@ -398,18 +308,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
   },
-  confirmButton: {
-    padding: 12,
-    backgroundColor: '#6ca06c',
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  confirmButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   saveButton: {
     padding: 15,
     backgroundColor: '#FFCC00',
@@ -445,6 +343,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-
 
 export default AssignmentDetail;
