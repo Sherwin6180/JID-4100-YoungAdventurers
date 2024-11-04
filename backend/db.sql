@@ -107,6 +107,18 @@ CREATE TABLE assignments (
   FOREIGN KEY (courseID, semester, sectionID) REFERENCES sections (courseID, semester, sectionID)
 ) ENGINE = InnoDB;
 
+DROP TABLE IF EXISTS goals;
+CREATE TABLE goals (
+  goalID INT AUTO_INCREMENT PRIMARY KEY,
+  studentUsername VARCHAR(255) NOT NULL,
+  assignmentID INT NOT NULL,
+  goalText TEXT NOT NULL,
+  UNIQUE (studentUsername, assignmentID),
+  INDEX (assignmentID, studentUsername),  -- Added index for foreign key reference
+  FOREIGN KEY (studentUsername) REFERENCES users (username) ON DELETE CASCADE,
+  FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID)
+) ENGINE = InnoDB;
+
 DROP TABLE IF EXISTS questions;
 
 CREATE TABLE questions (
@@ -146,3 +158,17 @@ CREATE TABLE student_submission (
   FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID) ON DELETE CASCADE,
   FOREIGN KEY (studentUsername) REFERENCES enrollments (studentUsername) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+DROP TABLE IF EXISTS peer_evaluations;
+CREATE TABLE peer_evaluations (
+  evalID INT AUTO_INCREMENT PRIMARY KEY,
+  evaluatorUsername VARCHAR(255) NOT NULL,
+  evaluateeUsername VARCHAR(255) NOT NULL,
+  assignmentID INT NOT NULL,
+  evaluationData JSON NOT NULL,
+  evaluated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (evaluatorUsername) REFERENCES users (username) ON DELETE CASCADE,
+  FOREIGN KEY (evaluateeUsername) REFERENCES users (username) ON DELETE CASCADE,
+  FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID),
+  FOREIGN KEY (assignmentID, evaluateeUsername) REFERENCES goals (assignmentID, studentUsername)
+) ENGINE = InnoDB;
