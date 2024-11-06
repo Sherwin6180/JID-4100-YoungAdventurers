@@ -172,26 +172,12 @@ CREATE TABLE student_submission (
   submissionID INT AUTO_INCREMENT PRIMARY KEY,
   assignmentID INT NOT NULL,
   studentUsername VARCHAR(255) NOT NULL,
+  evaluateeUsername VARCHAR(255) DEFAULT NULL,
   status ENUM('in_progress', 'submitted') DEFAULT 'in_progress',
   last_saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   submitted_at TIMESTAMP,
-  UNIQUE KEY unique_submission (assignmentID, studentUsername),
+  UNIQUE KEY unique_submission (assignmentID, studentUsername, evaluateeUsername),
   FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID) ON DELETE CASCADE,
-  FOREIGN KEY (studentUsername) REFERENCES enrollments (studentUsername) ON DELETE CASCADE
+  FOREIGN KEY (studentUsername) REFERENCES enrollments (studentUsername) ON DELETE CASCADE,
+  FOREIGN KEY (evaluateeUsername) REFERENCES users (username) ON DELETE CASCADE
 ) ENGINE=InnoDB;
-
-DROP TABLE IF EXISTS peer_evaluations;
-CREATE TABLE peer_evaluations (
-  evalID INT AUTO_INCREMENT PRIMARY KEY,
-  evaluatorUsername VARCHAR(255) NOT NULL,
-  evaluateeUsername VARCHAR(255) NOT NULL,
-  assignmentID INT NOT NULL,
-  evaluationData JSON NOT NULL,
-  evaluated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  goalID INT,
-  FOREIGN KEY (evaluatorUsername) REFERENCES users (username) ON DELETE CASCADE,
-  FOREIGN KEY (evaluateeUsername) REFERENCES users (username) ON DELETE CASCADE,
-  FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID),
-  FOREIGN KEY (assignmentID, evaluateeUsername) REFERENCES goals (assignmentID, studentUsername),
-  FOREIGN KEY (goalID) REFERENCES goals (goalID)
-) ENGINE = InnoDB;

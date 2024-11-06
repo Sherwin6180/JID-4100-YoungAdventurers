@@ -180,7 +180,7 @@ exports.fetchQuestions = (req, res) => {
 
   const query = `
     SELECT q.questionID, q.questionText, q.questionType, q.questionOptions, 
-           a.assignmentTitle, a.evaluateGoals
+           a.assignmentTitle, a.evaluateGoals, a.published
     FROM questions q
     JOIN assignments a ON q.assignmentID = a.assignmentID
     WHERE q.assignmentID = ?
@@ -196,10 +196,114 @@ exports.fetchQuestions = (req, res) => {
       return res.status(404).json({ message: 'No questions found for this assignment.' });
     }
 
-    const { assignmentTitle, evaluateGoals } = results[0];
+    const { assignmentTitle, evaluateGoals, published } = results[0];
 
-    const questions = results.map(({ assignmentTitle, evaluateGoals, ...question }) => question);
+    const questions = results.map(({ assignmentTitle, evaluateGoals, published, ...question }) => question);
 
-    res.status(200).json({ assignmentTitle, evaluateGoals, questions });
+    res.status(200).json({ assignmentTitle, evaluateGoals, published, questions });
   });
+};
+
+exports.publishAssignment = async (req, res) => {
+  const { assignmentID } = req.body;
+
+  if (!assignmentID) {
+    return res.status(400).json({ message: 'Assignment ID is required.' });
+  }
+
+  try {
+    // Start a transaction
+    await new Promise((resolve, reject) => {
+      db.query('START TRANSACTION', (err) => {
+        if (err) reject(err);
+        resolve();
+      });
+    });
+
+    // 1. Set assignment to published
+    await new Promise((resolve, reject) => {
+      const query = `UPDATE assignments SET published = TRUE WHERE assignmentID = ?`;
+      db.query(query, [assignmentID], (err, result) => {
+        if (err) return reject(err);
+        if (result.affectedRows === 0) return reject(new Error('Assignment not found.'));
+        resolve();
+      });
+    });
+
+    // 2. Get course, section, and semester for the assignment
+    const assignmentDetails = await new Promise((resolve, reject) => {
+      const query = `SELECT courseID, sectionID, semester FROM assignments WHERE assignmentID = ?`;
+      db.query(query, [assignmentID], (err, result) => {
+        if (err) return reject(err);
+        if (result.length === 0) return reject(new Error('Assignment not found.'));
+        resolve(result[0]);
+      });
+    });
+
+    const { courseID, sectionID, semester } = assignmentDetails;
+
+    // 3. Fetch all enrolled students in the course section
+    const students = await new Promise((resolve, reject) => {
+      const query = `SELECT studentUsername, groupID FROM enrollments WHERE courseID = ? AND sectionID = ? AND semester = ?`;
+      db.query(query, [courseID, sectionID, semester], (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    });
+
+    // 4. Group students by groupID to identify evaluatees outside the group
+    const groups = {};
+    students.forEach(student => {
+      if (!groups[student.groupID]) groups[student.groupID] = [];
+      groups[student.groupID].push(student.studentUsername);
+    });
+
+    // 5. For each student, create entries in `student_submission` for evaluations outside their group
+    const submissionPromises = students.map((student) => {
+      const evaluatees = Object.keys(groups)
+        .filter(groupID => groupID !== student.groupID.toString())
+        .flatMap(groupID => groups[groupID]);
+
+      const submissionEntries = evaluatees.map(evaluateeUsername => [
+        assignmentID,
+        student.studentUsername,
+        evaluateeUsername,
+        'in_progress',
+      ]);
+
+      // Insert entries in `student_submission` for each student/evaluatee pair
+      return new Promise((resolve, reject) => {
+        const query = `INSERT INTO student_submission (assignmentID, studentUsername, evaluateeUsername, status) VALUES ?`;
+        db.query(query, [submissionEntries], (err) => {
+          if (err) return reject(err);
+          resolve();
+        });
+      });
+    });
+
+    // Execute all submission entry promises
+    await Promise.all(submissionPromises);
+
+    // Commit transaction
+    await new Promise((resolve, reject) => {
+      db.query('COMMIT', (err) => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
+
+    res.status(200).json({ message: 'Assignment published successfully.' });
+  } catch (error) {
+    console.error('Error publishing assignment:', error);
+
+    // Rollback transaction in case of error
+    await new Promise((resolve, reject) => {
+      db.query('ROLLBACK', (err) => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
+
+    res.status(500).json({ message: 'An error occurred while publishing the assignment.', error: error.message });
+  }
 };

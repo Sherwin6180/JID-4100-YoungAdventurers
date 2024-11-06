@@ -14,6 +14,7 @@ const EditAssignmentQuestion = () => {
   const [questionText, setQuestionText] = useState('');
   const [questionType, setQuestionType] = useState('multiple_choice');
   const [options, setOptions] = useState(['', '', '', '']);
+  const [isPublished, setIsPublished] = useState(false);
   const [ratingRange, setRatingRange] = useState([1, 5]);
   const [includeEvaluateGoal, setIncludeEvaluateGoal] = useState(false);
   const { assignmentID } = useContext(UserContext);
@@ -27,10 +28,11 @@ const EditAssignmentQuestion = () => {
     try {
       const response = await fetch(`${server}/api/assignment/fetchQuestions/${assignmentID}`);
       const data = await response.json();
-
+  
       if (response.ok) {
         setQuestions(data.questions);
         setIncludeEvaluateGoal(data.evaluateGoals);
+        setIsPublished(data.published == 1 ? true : false);
       } else {
         Alert.alert('Error', data.message || 'Failed to fetch questions');
       }
@@ -39,6 +41,7 @@ const EditAssignmentQuestion = () => {
       Alert.alert('Error', 'An error occurred while fetching assignment data.');
     }
   };
+  
 
   // Update evaluateGoals value on the server
   const updateEvaluateGoals = async (value) => {
@@ -65,6 +68,7 @@ const EditAssignmentQuestion = () => {
   };
 
   const handleEvaluateGoalToggle = (value) => {
+    if (isPublished) return; 
     setIncludeEvaluateGoal(value);
     updateEvaluateGoals(value);
   };
@@ -159,6 +163,30 @@ const EditAssignmentQuestion = () => {
     );
   };
 
+  const handlePublishAssignment = async () => {
+    try {
+      const response = await fetch(`${server}/api/assignment/publishAssignment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ assignmentID }),
+      });
+  
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to publish assignment');
+      }
+  
+      setIsPublished(true); // 设置发布状态为 true
+      Alert.alert('Success', 'Assignment published successfully!');
+    } catch (error) {
+      console.error('Error publishing assignment:', error);
+      Alert.alert('Error', 'An error occurred while publishing the assignment.');
+    }
+  };
+  
+
   const handleOptionChange = (index, text) => {
     const newOptions = [...options];
     newOptions[index] = text;
@@ -176,64 +204,70 @@ const EditAssignmentQuestion = () => {
           <Switch
             value={includeEvaluateGoal == 1 ? true : false}
             onValueChange={handleEvaluateGoalToggle}
+            disabled={isPublished}
           />
         </View>
 
         {/* 更明显的分割线 */}
         <View style={styles.divider} />
 
-        {/* 问题文本输入 */}
-        <TextInput
-          style={styles.input}
-          placeholder="Enter question text"
-          value={questionText}
-          onChangeText={setQuestionText}
-        />
-
-        {/* 选择题目类型 */}
-        <Text style={styles.sectionTitle}>Select Question Type</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={questionType}
-            style={styles.picker}
-            onValueChange={(itemValue) => setQuestionType(itemValue)}
-          >
-            <Picker.Item label="Multiple Choice" value="multiple_choice" />
-            <Picker.Item label="Rating" value="rating" />
-            <Picker.Item label="Free Response" value="free_response" />
-          </Picker>
-        </View>
-
-        {/* 如果是选择题，显示选项输入框 */}
-        {questionType === 'multiple_choice' && (
+        {!isPublished && (
           <>
-            <Text style={styles.sectionTitle}>Enter Options</Text>
-            {options.map((option, index) => (
-              <TextInput
-                key={index}
-                style={styles.input}
-                placeholder={`Option ${index + 1}`}
-                value={option}
-                onChangeText={(text) => handleOptionChange(index, text)}
-              />
-            ))}
+            {/* 问题文本输入 */}
+            <TextInput
+              style={styles.input}
+              placeholder="Enter question text"
+              value={questionText}
+              onChangeText={setQuestionText}
+            />
+
+            {/* 选择题目类型 */}
+            <Text style={styles.sectionTitle}>Select Question Type</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={questionType}
+                style={styles.picker}
+                onValueChange={(itemValue) => setQuestionType(itemValue)}
+              >
+                <Picker.Item label="Multiple Choice" value="multiple_choice" />
+                <Picker.Item label="Rating" value="rating" />
+                <Picker.Item label="Free Response" value="free_response" />
+              </Picker>
+            </View>
+
+            {/* 如果是选择题，显示选项输入框 */}
+            {questionType === 'multiple_choice' && (
+              <>
+                <Text style={styles.sectionTitle}>Enter Options</Text>
+                {options.map((option, index) => (
+                  <TextInput
+                    key={index}
+                    style={styles.input}
+                    placeholder={`Option ${index + 1}`}
+                    value={option}
+                    onChangeText={(text) => handleOptionChange(index, text)}
+                  />
+                ))}
+              </>
+            )}
+
+            {/* 如果是打分题，显示打分范围 */}
+            {questionType === 'rating' && (
+              <Text style={styles.sectionTitle}>Rating Range: {ratingRange[0]} to {ratingRange[1]}</Text>
+            )}
+
+            {/* Free Response 不需要额外的输入框，仅显示文本框 */}
+            {questionType === 'free_response' && (
+              <Text style={styles.sectionTitle}>This is a free response question.</Text>
+            )}
+
+            {/* 添加问题按钮 */}
+            <TouchableOpacity style={styles.addButton} onPress={handleAddQuestion}>
+              <Text style={styles.addButtonText}>Add Question</Text>
+            </TouchableOpacity>
           </>
         )}
 
-        {/* 如果是打分题，显示打分范围 */}
-        {questionType === 'rating' && (
-          <Text style={styles.sectionTitle}>Rating Range: {ratingRange[0]} to {ratingRange[1]}</Text>
-        )}
-
-        {/* Free Response 不需要额外的输入框，仅显示文本框 */}
-        {questionType === 'free_response' && (
-          <Text style={styles.sectionTitle}>This is a free response question.</Text>
-        )}
-
-        {/* 添加问题按钮 */}
-        <TouchableOpacity style={styles.addButton} onPress={handleAddQuestion}>
-          <Text style={styles.addButtonText}>Add Question</Text>
-        </TouchableOpacity>
 
         {/* 显示添加的题目 */}
         <Text style={styles.sectionTitle}>Questions Added</Text>
@@ -247,12 +281,14 @@ const EditAssignmentQuestion = () => {
                 <Text>Options: {question.questionOptions.join(', ')}</Text>
               )}
           
-          <TouchableOpacity
-            style={styles.deleteIcon}
-            onPress={() => handleDeleteQuestion(question.questionID)}
-          >
-            <MaterialIcons name="delete" size={24} color="#FF6347" />
-          </TouchableOpacity>
+              {!isPublished && (
+                <TouchableOpacity
+                  style={styles.deleteIcon}
+                  onPress={() => handleDeleteQuestion(question.questionID)}
+                >
+                  <MaterialIcons name="delete" size={24} color="#FF6347" />
+                </TouchableOpacity>
+              )}
             </View>
           ))
         )}
@@ -261,6 +297,13 @@ const EditAssignmentQuestion = () => {
         <TouchableOpacity style={styles.saveButton} onPress={() => navigation.goBack()}>
           <Text style={styles.saveButtonText}>Return</Text>
         </TouchableOpacity>
+
+        {!isPublished && (
+          <TouchableOpacity style={styles.publishButton} onPress={handlePublishAssignment}>
+            <Text style={styles.publishButtonText}>Publish Assignment</Text>
+          </TouchableOpacity>
+        )}
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -351,6 +394,18 @@ const styles = StyleSheet.create({
     top: 10,
     right: 10,
   },
+  publishButton: {
+    padding: 15,
+    backgroundColor: '#4CAF50',
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  publishButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  }
 });
 
 export default EditAssignmentQuestion;
