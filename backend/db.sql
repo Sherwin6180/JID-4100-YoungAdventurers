@@ -53,6 +53,23 @@ CREATE TABLE sections (
   FOREIGN KEY (courseID, semester) REFERENCES courses (courseID, semester)
 ) ENGINE = innodb;
 
+DROP TABLE IF EXISTS student_groups;
+CREATE TABLE student_groups (
+  groupID INT AUTO_INCREMENT PRIMARY KEY,
+  courseID VARCHAR(255) NOT NULL,
+  sectionID VARCHAR(255) NOT NULL,
+  semester ENUM('Spring 2024', 'Summer 2024', 'Fall 2024', 
+                'Spring 2025', 'Summer 2025', 'Fall 2025',
+                'Spring 2026', 'Summer 2026', 'Fall 2026',
+                'Spring 2027', 'Summer 2027', 'Fall 2027',
+                'Spring 2028', 'Summer 2028', 'Fall 2028',
+                'Spring 2029', 'Summer 2029', 'Fall 2029',
+                'Spring 2030', 'Summer 2030', 'Fall 2030') NOT NULL,
+  groupName VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (courseID, sectionID, semester) REFERENCES sections (courseID, sectionID, semester) ON DELETE CASCADE
+) ENGINE = InnoDB;
+
 DROP TABLE IF EXISTS enrollments;
 CREATE TABLE enrollments (
   studentUsername VARCHAR(255) NOT NULL,
@@ -106,6 +123,8 @@ CREATE TABLE assignments (
   sectionID VARCHAR(255) NOT NULL,
   assignmentTitle VARCHAR(255) NOT NULL,
   dueDateTime DATETIME NOT NULL,
+  evaluateGoals BOOLEAN DEFAULT FALSE,
+  published BOOLEAN DEFAULT FALSE,
   FOREIGN KEY (courseID, semester, sectionID) REFERENCES sections (courseID, semester, sectionID)
 ) ENGINE = InnoDB;
 
@@ -169,25 +188,10 @@ CREATE TABLE peer_evaluations (
   assignmentID INT NOT NULL,
   evaluationData JSON NOT NULL,
   evaluated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  goalID INT,
   FOREIGN KEY (evaluatorUsername) REFERENCES users (username) ON DELETE CASCADE,
   FOREIGN KEY (evaluateeUsername) REFERENCES users (username) ON DELETE CASCADE,
   FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID),
-  FOREIGN KEY (assignmentID, evaluateeUsername) REFERENCES goals (assignmentID, studentUsername)
-) ENGINE = InnoDB;
-
-DROP TABLE IF EXISTS student_groups;
-CREATE TABLE student_groups (
-  groupID INT AUTO_INCREMENT PRIMARY KEY,
-  courseID VARCHAR(255) NOT NULL,
-  sectionID VARCHAR(255) NOT NULL,
-  semester ENUM('Spring 2024', 'Summer 2024', 'Fall 2024', 
-                'Spring 2025', 'Summer 2025', 'Fall 2025',
-                'Spring 2026', 'Summer 2026', 'Fall 2026',
-                'Spring 2027', 'Summer 2027', 'Fall 2027',
-                'Spring 2028', 'Summer 2028', 'Fall 2028',
-                'Spring 2029', 'Summer 2029', 'Fall 2029',
-                'Spring 2030', 'Summer 2030', 'Fall 2030') NOT NULL,
-  groupName VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (courseID, sectionID, semester) REFERENCES sections (courseID, sectionID, semester) ON DELETE CASCADE
+  FOREIGN KEY (assignmentID, evaluateeUsername) REFERENCES goals (assignmentID, studentUsername),
+  FOREIGN KEY (goalID) REFERENCES goals (goalID)
 ) ENGINE = InnoDB;

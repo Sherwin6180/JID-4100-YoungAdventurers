@@ -118,6 +118,58 @@ exports.addQuestion = (req, res) => {
   );
 };
 
+exports.deleteQuestion = (req, res) => {
+  const { questionID } = req.body;
+
+  if (!questionID) {
+    return res.status(400).json({ message: 'Question ID is required.' });
+  }
+
+  db.query(
+    'DELETE FROM questions WHERE questionID = ?',
+    [questionID],
+    (err, result) => {
+      if (err) {
+        return res.status(500).json({ message: 'Database error', error: err });
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Question not found.' });
+      }
+
+      res.status(200).json({ message: 'Question deleted successfully!' });
+    }
+  );
+};
+
+exports.updateEvaluateGoals = (req, res) => {
+  const { assignmentID, evaluateGoals } = req.body;
+  if (assignmentID === undefined || evaluateGoals === undefined) {
+    return res.status(400).json({ message: 'assignmentID and evaluateGoals are required' });
+  }
+
+  const evaluateGoalsValue = evaluateGoals ? 1 : 0;
+
+  const query = `
+    UPDATE assignments
+    SET evaluateGoals = ?
+    WHERE assignmentID = ?
+  `;
+
+  db.query(query, [evaluateGoalsValue, assignmentID], (err, result) => {
+    if (err) {
+      console.error('Error updating evaluateGoals:', err);
+      return res.status(500).json({ message: 'Error updating evaluateGoals', error: err });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    res.status(200).json({ message: 'evaluateGoals updated successfully' });
+  });
+};
+
 
 exports.fetchQuestions = (req, res) => {
   const { assignmentID } = req.params;
@@ -127,7 +179,8 @@ exports.fetchQuestions = (req, res) => {
   }
 
   const query = `
-    SELECT q.questionID, q.questionText, q.questionType, q.questionOptions, a.assignmentTitle
+    SELECT q.questionID, q.questionText, q.questionType, q.questionOptions, 
+           a.assignmentTitle, a.evaluateGoals
     FROM questions q
     JOIN assignments a ON q.assignmentID = a.assignmentID
     WHERE q.assignmentID = ?
@@ -143,12 +196,10 @@ exports.fetchQuestions = (req, res) => {
       return res.status(404).json({ message: 'No questions found for this assignment.' });
     }
 
-    // Extract the assignmentTitle from the first row, since it's the same for all questions
-    const assignmentTitle = results[0].assignmentTitle;
+    const { assignmentTitle, evaluateGoals } = results[0];
 
-    // Remove the assignmentTitle from individual question objects to avoid redundancy
-    const questions = results.map(({ assignmentTitle, ...question }) => question);
+    const questions = results.map(({ assignmentTitle, evaluateGoals, ...question }) => question);
 
-    res.status(200).json({ assignmentTitle, questions });
+    res.status(200).json({ assignmentTitle, evaluateGoals, questions });
   });
 };
