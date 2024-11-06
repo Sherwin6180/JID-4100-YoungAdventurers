@@ -47,7 +47,8 @@ const GroupMemberList = () => {
 
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.title}>Group Members</Text>
-          <Text style={styles.subtitle}>Group ID: {groupID}</Text>
+          {/* 这里把原先Group ID更改成了Students */}
+          <Text style={styles.subtitle}>Students: {groupID}</Text>
 
           {members.map((member) => (
             <TouchableOpacity
@@ -60,7 +61,7 @@ const GroupMemberList = () => {
               </Text>
             </TouchableOpacity>
           ))}
-
+          
           {/* Complete 按钮 */}
           <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
             <Text style={styles.completeButtonText}>Complete</Text>
@@ -70,7 +71,6 @@ const GroupMemberList = () => {
     </SafeAreaView>
   );
 };
-
 // 样式定义
 const styles = StyleSheet.create({
   safeArea: {
