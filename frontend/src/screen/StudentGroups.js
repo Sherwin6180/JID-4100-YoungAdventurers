@@ -1,36 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { UserContext } from '../../UserContext'; // 引入 UserContext 用于获取用户信息
+import config from '../../config';
 
-// 假设数据结构，包含一些已有的组和组员
-const initialGroupsData = [
-  {
-    id: 'group1',
-    name: 'Project Team A',
-    members: [{ username: 'alice', firstName: 'Alice', lastName: 'Johnson' }],
-  },
-  {
-    id: 'group2',
-    name: 'Research Group B',
-    members: [
-      { username: 'bob', firstName: 'Bob', lastName: 'Brown' },
-      { username: 'carol', firstName: 'Carol', lastName: 'Davis' },
-    ],
-  },
-];
-
+const server = config.apiUrl;
 const MyGroup = () => {
   const navigation = useNavigation();
-  const [groups, setGroups] = useState(initialGroupsData);
+  const { courseID, semester, sectionID, username, firstName, lastName } = useContext(UserContext); // 获取用户上下文信息
+
+  const [groups, setGroups] = useState([]); // 用于存储从后端获取的组信息
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [user] = useState({ username: 'student1', firstName: 'John', lastName: 'Doe' });
   const [joinedGroupId, setJoinedGroupId] = useState(null); // 记录用户已加入的组ID
+
+  // 在组件加载时调用 fetchGroups API
+  const fetchGroups = async () => {
+    try {
+      const response = await fetch(`${server}/api/group/fetchGroups/${courseID}/${sectionID}/${semester}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch groups');
+      }
+      const data = await response.json();
+      setGroups(data.groups); // 更新组数据
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      Alert.alert('Error', 'Failed to load groups.');
+    }
+  };
+
+  useEffect(() => {
+    fetchGroups(); // 调用函数获取组信息
+  }, [courseID, sectionID, semester]);
 
   // 选择组并查看组员，或关闭展开的组
   const handleSelectGroup = (group) => {
-    // 如果再次点击已展开的组，则关闭它
-    if (selectedGroup && selectedGroup.id === group.id) {
+    if (selectedGroup && selectedGroup.groupID === group.groupID) {
       setSelectedGroup(null);
     } else {
       setSelectedGroup(group);
@@ -38,53 +43,43 @@ const MyGroup = () => {
   };
 
   // 增加用户到当前组
-  const handleJoinGroup = () => {
-    if (selectedGroup.members.find((member) => member.username === user.username)) {
-      Alert.alert('Error', 'You are already a member of this group.');
-      return;
-    }
-
-    const updatedGroups = groups.map((group) => {
-      if (group.id === selectedGroup.id) {
-        return {
-          ...group,
-          members: [...group.members, user],
-        };
+  const handleJoinGroup = async () => {
+    try {
+      if (selectedGroup.students.find((member) => member.username === username)) {
+        Alert.alert('Error', 'You are already a member of this group.');
+        return;
       }
-      return group;
-    });
-
-    setGroups(updatedGroups);
-    setSelectedGroup({
-      ...selectedGroup,
-      members: [...selectedGroup.members, user],
-    });
-    setJoinedGroupId(selectedGroup.id); // 设置已加入的组ID
-  };
-
-  // 从当前组删除用户
-  const handleLeaveGroup = () => {
-    if (!selectedGroup.members.find((member) => member.username === user.username)) {
-      Alert.alert('Error', 'You are not a member of this group.');
-      return;
-    }
-
-    const updatedGroups = groups.map((group) => {
-      if (group.id === selectedGroup.id) {
-        return {
-          ...group,
-          members: group.members.filter((member) => member.username !== user.username),
-        };
+  
+      // 调用 joinGroup API
+      const response = await fetch(`${server}/api/student/joinGroup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentUsername: username,
+          groupID: selectedGroup.groupID,
+          courseID,
+          sectionID,
+          semester,
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to join the group');
       }
-      return group;
-    });
-
-    setGroups(updatedGroups);
-    setSelectedGroup({
-      ...selectedGroup,
-      members: selectedGroup.members.filter((member) => member.username !== user.username),
-    });
-    setJoinedGroupId(null); // 清空已加入的组ID
+  
+      Alert.alert('Success', 'Joined the group successfully!');
+  
+      // 重新获取最新的组信息并更新状态
+      await fetchGroups();
+  
+      // 更新本地状态
+      setJoinedGroupId(selectedGroup.groupID);
+    } catch (error) {
+      console.error('Error joining group:', error);
+      Alert.alert('Error', 'Failed to join the group.');
+    }
   };
 
   return (
@@ -124,47 +119,41 @@ const MyGroup = () => {
 
           {/* 组列表 */}
           <View style={styles.groupList}>
-            {groups.map((group) => (
-              <View key={group.id}>
-                <TouchableOpacity
-                  style={[
-                    styles.groupButton,
-                    selectedGroup && selectedGroup.id === group.id && styles.selectedGroupButton,
-                    joinedGroupId === group.id && styles.joinedGroupButton, // 已加入的组使用不同颜色
-                  ]}
-                  onPress={() => handleSelectGroup(group)}
-                >
-                  <Text style={styles.groupButtonText}>{group.name}</Text>
-                </TouchableOpacity>
+            {Array.isArray(groups) && groups.length > 0 ? (
+              groups.map((group) => (
+                <View key={group.groupID}>
+                  <TouchableOpacity
+                    style={[
+                      styles.groupButton,
+                      selectedGroup && selectedGroup.groupID === group.groupID && styles.selectedGroupButton,
+                      joinedGroupId === group.groupID && styles.joinedGroupButton,
+                    ]}
+                    onPress={() => handleSelectGroup(group)}
+                  >
+                    <Text style={styles.groupButtonText}>{group.groupName}</Text>
+                  </TouchableOpacity>
 
-                {/* 如果当前组是选定的组，则显示组员名单 */}
-                {selectedGroup && selectedGroup.id === group.id && (
-                  <View style={styles.groupDetail}>
-                    <Text style={styles.groupDetailTitle}>Members of {selectedGroup.name}:</Text>
-                    {selectedGroup.members.map((member) => (
-                      <Text key={member.username} style={styles.memberText}>
-                        {member.firstName} {member.lastName}
-                      </Text>
-                    ))}
+                  {selectedGroup && selectedGroup.groupID === group.groupID && (
+                    <View style={styles.groupDetail}>
+                      <Text style={styles.groupDetailTitle}>Members of {selectedGroup.groupName}:</Text>
+                      {selectedGroup.students.map((member) => (
+                        <Text key={member.username} style={styles.memberText}>
+                          {member.firstName} {member.lastName}
+                        </Text>
+                      ))}
 
-                    {/* 右对齐显示的加入或退出按钮 */}
-                    <View style={styles.buttonContainer}>
-                      {joinedGroupId === group.id ? (
-                        <TouchableOpacity style={styles.leaveButton} onPress={handleLeaveGroup}>
-                          <Text style={styles.buttonText}>Leave</Text>
+                      <View style={styles.buttonContainer}>
+                        <TouchableOpacity style={styles.joinButton} onPress={handleJoinGroup}>
+                          <Text style={styles.buttonText}>Join</Text>
                         </TouchableOpacity>
-                      ) : (
-                        !joinedGroupId && (
-                          <TouchableOpacity style={styles.joinButton} onPress={handleJoinGroup}>
-                            <Text style={styles.buttonText}>Join</Text>
-                          </TouchableOpacity>
-                        )
-                      )}
+                      </View>
                     </View>
-                  </View>
-                )}
-              </View>
-            ))}
+                  )}
+                </View>
+              ))
+            ) : (
+              <Text>No groups available.</Text>
+            )}
           </View>
         </ScrollView>
       </View>

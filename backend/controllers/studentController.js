@@ -224,3 +224,55 @@ exports.fetchAssignments = (req, res) => {
     res.status(200).json({ assignments: results });
   });
 };
+
+exports.joinGroup = (req, res) => {
+  const { studentUsername, groupID, courseID, sectionID, semester } = req.body;
+
+  if (!studentUsername || !groupID || !courseID || !sectionID || !semester) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  const checkQuery = `
+    SELECT groupID 
+    FROM enrollments 
+    WHERE studentUsername = ? AND courseID = ? AND sectionID = ? AND semester = ?
+  `;
+
+  db.query(checkQuery, [studentUsername, courseID, sectionID, semester], (err, results) => {
+    if (err) {
+      console.error('Error checking student enrollment:', err);
+      return res.status(500).json({ message: 'Error checking enrollment', error: err });
+    }
+
+    if (results.length > 0) {
+      const updateQuery = `
+        UPDATE enrollments 
+        SET groupID = ? 
+        WHERE studentUsername = ? AND courseID = ? AND sectionID = ? AND semester = ?
+      `;
+
+      db.query(updateQuery, [groupID, studentUsername, courseID, sectionID, semester], (err, result) => {
+        if (err) {
+          console.error('Error updating student group:', err);
+          return res.status(500).json({ message: 'Error updating group', error: err });
+        }
+
+        return res.status(200).json({ message: 'Student group updated successfully!' });
+      });
+    } else {
+      const insertQuery = `
+        INSERT INTO enrollments (studentUsername, courseID, sectionID, semester, groupID)
+        VALUES (?, ?, ?, ?, ?)
+      `;
+
+      db.query(insertQuery, [studentUsername, courseID, sectionID, semester, groupID], (err, result) => {
+        if (err) {
+          console.error('Error adding student to group:', err);
+          return res.status(500).json({ message: 'Error adding student to group', error: err });
+        }
+
+        res.status(201).json({ message: 'Student added to group successfully!' });
+      });
+    }
+  });
+};
