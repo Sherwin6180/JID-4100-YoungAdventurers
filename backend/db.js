@@ -7,8 +7,8 @@ const db = mysql.createConnection({
   port     : '3306',
   user     : 'root',
   // password : '12345678',
-  //password: 'letsmakeithappen', // Xinyu local password test
-  password: '2292781290',
+  password: 'letsmakeithappen', // Xinyu local password test
+  // password: '2292781290',
   database: 'evaluation'
 });
 

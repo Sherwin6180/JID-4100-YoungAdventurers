@@ -3,6 +3,7 @@ import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, Scro
 import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
 import { UserContext } from '../../UserContext';
+import { MaterialIcons } from '@expo/vector-icons';
 import config from '../../config';
 
 const server = config.apiUrl;
@@ -15,27 +16,57 @@ const EditAssignmentQuestion = () => {
   const [options, setOptions] = useState(['', '', '', '']);
   const [ratingRange, setRatingRange] = useState([1, 5]);
   const [includeEvaluateGoal, setIncludeEvaluateGoal] = useState(false);
-  const [goalStage, setGoalStage] = useState('');
   const { assignmentID } = useContext(UserContext);
 
   useEffect(() => {
-    fetchQuestions();
+    fetchAssignmentData();
   }, []);
 
-  const fetchQuestions = async () => {
+  // Fetch questions and current evaluateGoals value
+  const fetchAssignmentData = async () => {
     try {
       const response = await fetch(`${server}/api/assignment/fetchQuestions/${assignmentID}`);
       const data = await response.json();
 
       if (response.ok) {
         setQuestions(data.questions);
+        setIncludeEvaluateGoal(data.evaluateGoals);
       } else {
         Alert.alert('Error', data.message || 'Failed to fetch questions');
       }
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'An error occurred while fetching questions.');
+      Alert.alert('Error', 'An error occurred while fetching assignment data.');
     }
+  };
+
+  // Update evaluateGoals value on the server
+  const updateEvaluateGoals = async (value) => {
+    try {
+      const response = await fetch(`${server}/api/assignment/updateEvaluateGoals`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assignmentID,
+          evaluateGoals: value,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to update evaluate goals');
+      }
+    } catch (error) {
+      console.error('Error updating evaluate goals:', error);
+      Alert.alert('Error', 'An error occurred while updating evaluate goals.');
+    }
+  };
+
+  const handleEvaluateGoalToggle = (value) => {
+    setIncludeEvaluateGoal(value);
+    updateEvaluateGoals(value);
   };
 
   const handleAddQuestion = async () => {
@@ -43,14 +74,14 @@ const EditAssignmentQuestion = () => {
       Alert.alert('Error', 'Please enter the question text.');
       return;
     }
-
+  
     const newQuestion = {
       questionText: questionText,
       questionType: questionType,
       questionOptions: questionType === 'multiple_choice' ? [...options] : null,
       ratingRange: questionType === 'rating' ? ratingRange : null,
     };
-
+  
     const payload = {
       assignmentID,
       questionText: newQuestion.questionText,
@@ -58,7 +89,7 @@ const EditAssignmentQuestion = () => {
       questionOptions: newQuestion.questionType === 'multiple_choice' ? newQuestion.questionOptions : null,
       ratingRange: newQuestion.questionType === 'rating' ? newQuestion.ratingRange : null,
     };
-
+  
     try {
       const response = await fetch(`${server}/api/assignment/addQuestion`, {
         method: 'POST',
@@ -67,15 +98,16 @@ const EditAssignmentQuestion = () => {
         },
         body: JSON.stringify(payload),
       });
-
+  
       const data = await response.json();
-
+  
       if (!response.ok) {
         Alert.alert('Error', data.message || 'Failed to add question');
         return;
       }
-
-      setQuestions([...questions, newQuestion]);
+  
+      // Add the new question to the questions list with the questionID from the backend
+      setQuestions([...questions, { ...newQuestion, questionID: data.question.questionID }]);
       setQuestionText('');
       setOptions(['', '', '', '']);
       Alert.alert('Success', 'Question added successfully!');
@@ -83,6 +115,48 @@ const EditAssignmentQuestion = () => {
       console.error(error);
       Alert.alert('Error', 'An error occurred while adding the question.');
     }
+  };
+
+  const handleDeleteQuestion = (questionID) => {
+    Alert.alert(
+      "Confirm Deletion",
+      "Are you sure you want to delete this question?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(`${server}/api/assignment/deleteQuestion`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ questionID }),
+              });
+  
+              const data = await response.json();
+  
+              if (!response.ok) {
+                Alert.alert('Error', data.message || 'Failed to delete question');
+                return;
+              }
+  
+              setQuestions(questions.filter((question) => question.questionID !== questionID));
+              Alert.alert("Success", "Question deleted successfully!");
+            } catch (error) {
+              console.error("Error deleting question:", error);
+              Alert.alert("Error", "An error occurred while deleting the question.");
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const handleOptionChange = (index, text) => {
@@ -98,29 +172,12 @@ const EditAssignmentQuestion = () => {
 
         {/* 是否包含 evaluate goal 类型的问题 */}
         <View style={styles.switchContainer}>
-          <Text style={styles.sectionTitle}>Include Evaluate Goal?</Text>
+          <Text style={styles.sectionTitle}>Include Goal Evaluation?</Text>
           <Switch
-            value={includeEvaluateGoal}
-            onValueChange={(value) => {
-              setIncludeEvaluateGoal(value);
-              if (!value) setGoalStage('');
-            }}
+            value={includeEvaluateGoal == 1 ? true : false}
+            onValueChange={handleEvaluateGoalToggle}
           />
         </View>
-
-        {/* 输入评估阶段编号 */}
-        {includeEvaluateGoal && (
-          <View style={styles.goalStageContainer}>
-            <Text style={styles.label}>Enter Goal Stage</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter stage number"
-              value={goalStage}
-              keyboardType="numeric"
-              onChangeText={setGoalStage}
-            />
-          </View>
-        )}
 
         {/* 更明显的分割线 */}
         <View style={styles.divider} />
@@ -189,13 +246,20 @@ const EditAssignmentQuestion = () => {
               {question.questionType === 'multiple_choice' && (
                 <Text>Options: {question.questionOptions.join(', ')}</Text>
               )}
+          
+          <TouchableOpacity
+            style={styles.deleteIcon}
+            onPress={() => handleDeleteQuestion(question.questionID)}
+          >
+            <MaterialIcons name="delete" size={24} color="#FF6347" />
+          </TouchableOpacity>
             </View>
           ))
         )}
 
         {/* 保存作业按钮 */}
         <TouchableOpacity style={styles.saveButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.saveButtonText}>Save Assignment</Text>
+          <Text style={styles.saveButtonText}>Return</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -221,13 +285,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  goalStageContainer: {
-    marginTop: 5,
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 18,
-  },
   input: {
     padding: 15,
     backgroundColor: '#f9f9f9',
@@ -237,10 +294,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   divider: {
-    height: 2, // 增加分割线高度
-    backgroundColor: '#444', // 使用更深的颜色
+    height: 2,
+    backgroundColor: '#444',
     marginVertical: 20,
-    marginHorizontal: 10, // 增加左右的间距
+    marginHorizontal: 10,
   },
   pickerContainer: {
     marginBottom: 20,
@@ -288,6 +345,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  deleteIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
   },
 });
 

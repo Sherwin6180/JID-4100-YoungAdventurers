@@ -7,5 +7,6 @@ router.get('/getStudentAnswers/:assignmentID/:studentUsername', studentControlle
 router.post('/saveStudentAnswers', studentController.saveStudentAnswers);
 router.post('/submitStudentAnswers', studentController.submitStudentAnswers);
 router.get('/fetchAssignments/:studentUsername/:courseID/:semester/:sectionID', studentController.fetchAssignments);
+router.post('/joinGroup', studentController.joinGroup);
 
 module.exports = router;

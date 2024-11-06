@@ -1,52 +1,78 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { SafeAreaView, StatusBar, View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, Modal, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MaterialIcons } from '@expo/vector-icons'; 
+import { MaterialIcons } from '@expo/vector-icons';
 import { UserContext } from '../../UserContext';
+import config from '../../config';
+
+const server = config.apiUrl;
 
 const TeacherGroupsEdit = () => {
   const navigation = useNavigation();
   const { courseID, semester, sectionID } = useContext(UserContext);
 
-  // 假设的数据结构：初始化一些组和组员信息
-  const [groups, setGroups] = useState([
-    {
-      id: '1',
-      name: 'Group A',
-      students: [
-        { username: 'student1', firstName: 'John', lastName: 'Doe' },
-        { username: 'student2', firstName: 'Jane', lastName: 'Smith' },
-      ],
-    },
-    {
-      id: '2',
-      name: 'Group B',
-      students: [
-        { username: 'student3', firstName: 'Alice', lastName: 'Johnson' },
-        { username: 'student4', firstName: 'Bob', lastName: 'Brown' },
-      ],
-    },
-  ]); 
+  const [groups, setGroups] = useState([]);
   const [newGroupName, setNewGroupName] = useState('');
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
+  useEffect(() => {
+    fetchGroups();
+  }, []);
+
+  // 从后端获取组列表
+  const fetchGroups = async () => {
+    try {
+      const response = await fetch(`${server}/api/group/fetchGroups/${courseID}/${sectionID}/${semester}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setGroups(data.groups);
+      } else {
+        console.error('Error fetching groups:', data.message);
+        Alert.alert('Error', 'Failed to fetch groups.');
+      }
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      Alert.alert('Error', 'An error occurred while fetching groups.');
+    }
+  };
+
   // 添加新组
-  const addGroup = () => {
+  const addGroup = async () => {
     if (newGroupName.trim() === '') {
       Alert.alert('Error', 'Please provide a valid group name.');
       return;
     }
 
-    const newGroup = {
-      id: `${groups.length + 1}`, // 简单生成一个新ID
-      name: newGroupName,
-      students: [],
-    };
+    try {
+      const response = await fetch(`${server}/api/group/createGroup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          groupName: newGroupName,
+          courseID,
+          sectionID,
+          semester,
+        }),
+      });
 
-    setGroups([...groups, newGroup]);
-    setNewGroupName('');
-    Alert.alert('Success', 'Group added successfully!');
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert('Success', 'Group added successfully!');
+        setNewGroupName('');
+        fetchGroups();
+      } else {
+        console.error('Error creating group:', data.message);
+        Alert.alert('Error', 'Failed to create group.');
+      }
+    } catch (error) {
+      console.error('Error creating group:', error);
+      Alert.alert('Error', 'An error occurred while creating the group.');
+    }
   };
 
   // 查看组内学生详情
@@ -100,8 +126,8 @@ const TeacherGroupsEdit = () => {
             <Text style={styles.noGroupsText}>No groups created for this section.</Text>
           ) : (
             groups.map((group) => (
-              <View key={group.id} style={styles.groupCard}>
-                <Text style={styles.groupName}>{group.name} - {group.students.length} students</Text>
+              <View key={group.groupID} style={styles.groupCard}>
+                <Text style={styles.groupName}>{group.groupName} - {group.students.length} students</Text>
                 <TouchableOpacity
                   style={styles.viewButton}
                   onPress={() => viewGroupDetails(group)}
@@ -131,7 +157,7 @@ const TeacherGroupsEdit = () => {
         <SafeAreaView style={styles.modalContainer}>
           {selectedGroup && (
             <>
-              <Text style={styles.modalTitle}>{selectedGroup.name}</Text>
+              <Text style={styles.modalTitle}>{selectedGroup.groupName}</Text>
               <Text style={styles.modalSubtitle}>Members:</Text>
               
               {/* 组员列表 */}
