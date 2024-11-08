@@ -1,20 +1,24 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { UserContext } from '../../UserContext';
 
 const includeEvaluateGoal = true; // 是否启用 evaluation goal
 
 const AssignmentDetail = () => {
   const navigation = useNavigation();
+  const route = useRoute();
   const [assignment, setAssignment] = useState(null);
   const [answers, setAnswers] = useState({});
   const [status, setStatus] = useState('in_progress');
   const [lastSaved, setLastSaved] = useState('');
   const { assignmentID, username } = useContext(UserContext);
+  
+  // 获取传递过来的 memberID 和完成回调
+  const { memberID, onComplete } = route.params;
 
   const [selectedMember, setSelectedMember] = useState({
-    username: 'member1',
+    username: memberID || 'member1',
     firstName: 'Alice',
     lastName: 'Johnson',
     goal: 'Complete project design'
@@ -65,15 +69,22 @@ const AssignmentDetail = () => {
       const answer = answers[question.questionID];
       return question.questionType !== "free_response" ? answer : answer?.trim() !== '';
     });
-
+  
     if (!allQuestionsAnswered) {
       Alert.alert("Incomplete", "Please answer all questions before submitting.");
       return;
     }
-
+  
     setStatus('submitted');
     Alert.alert("Submitted", "Your assignment has been submitted.");
-    navigation.navigate(includeEvaluateGoal ? 'StudentDoAssignmentChoosePerson' : 'StudentCourseDetails');
+    
+    // 调用 onComplete 回调函数来更新 GroupMemberList 的状态
+    if (onComplete) {
+      onComplete();
+    }
+    
+    // 提交完成后直接返回 chooseperson 页面
+    navigation.navigate('StudentDoAssignmentChoosePerson');
   };
 
   const handleMemberRating = (username, rating) => {

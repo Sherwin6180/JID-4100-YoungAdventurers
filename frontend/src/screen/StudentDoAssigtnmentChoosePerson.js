@@ -1,7 +1,7 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { UserContext } from '../../UserContext';
 
 const GroupMemberList = () => {
@@ -15,14 +15,20 @@ const GroupMemberList = () => {
     { username: 'member3', firstName: 'Carol', lastName: 'Davis' },
   ];
 
+  // 用于跟踪已完成的成员
+  const [completedMembers, setCompletedMembers] = useState({});
+
   // 点击组员跳转至 StudentDoAssignment 页面
   const handleMemberClick = (member) => {
-    navigation.navigate('StudentDoAssignment', { memberID: member.username });
+    navigation.navigate('StudentDoAssignment', {
+      memberID: member.username,
+      onComplete: () => handleCompleteForMember(member.username),
+    });
   };
 
-  // 点击 Complete 按钮返回 StudentCourseDetails 页面
-  const handleComplete = () => {
-    navigation.navigate('StudentCourseDetails');
+  // 更新完成的成员状态
+  const handleCompleteForMember = (username) => {
+    setCompletedMembers((prev) => ({ ...prev, [username]: true }));
   };
 
   return (
@@ -47,8 +53,7 @@ const GroupMemberList = () => {
 
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.title}>Group Members</Text>
-          {/* 这里把原先Group ID更改成了Students */}
-          <Text style={styles.subtitle}>Students: {groupID}</Text>
+          <Text style={styles.subtitle}>Students in Group: {groupID}</Text>
 
           {members.map((member) => (
             <TouchableOpacity
@@ -57,13 +62,13 @@ const GroupMemberList = () => {
               onPress={() => handleMemberClick(member)}
             >
               <Text style={styles.memberName}>
-                {member.firstName} {member.lastName}
+                {member.firstName} {member.lastName} - {completedMembers[member.username] ? 'Complete' : 'Incomplete'}
               </Text>
             </TouchableOpacity>
           ))}
-          
+
           {/* Complete 按钮 */}
-          <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
+          <TouchableOpacity style={styles.completeButton} onPress={() => navigation.navigate('StudentCourseDetails')}>
             <Text style={styles.completeButtonText}>Complete</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -71,6 +76,7 @@ const GroupMemberList = () => {
     </SafeAreaView>
   );
 };
+
 // 样式定义
 const styles = StyleSheet.create({
   safeArea: {
