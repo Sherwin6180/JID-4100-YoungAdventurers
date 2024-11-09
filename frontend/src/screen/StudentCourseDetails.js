@@ -11,13 +11,9 @@ const AssignmentList = () => {
   const navigation = useNavigation();
   const [assignments, setAssignments] = useState([]);
   const [expandedAssignment, setExpandedAssignment] = useState(null); // 当前展开的 assignmentID
-  const includeEvaluateGoal = true; // 测试用参数，判断是否启用 evaluate goal
-  const otherGroups = [
-    { id: 'group2', name: 'Research Group B' },
-    { id: 'group3', name: 'Development Team C' },
-  ]; // 假设数据结构，包含除了用户所在组之外的其他组
+  const [otherGroups, setOtherGroups] = useState([]); // 存储真实的 group 数据
 
-  const { courseID, semester, sectionID, username, setAssignmentID } = useContext(UserContext);
+  const { courseID, semester, sectionID, username, setAssignmentID, setGroupID } = useContext(UserContext);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
@@ -33,6 +29,7 @@ const AssignmentList = () => {
 
       if (response.ok) {
         setAssignments(data.assignments);
+        setOtherGroups(data.groups); // 从 API 响应中提取 group 列表
       } else {
         console.log('Failed to load assignments', data.message);
       }
@@ -42,29 +39,18 @@ const AssignmentList = () => {
   };
 
   // 点击 assignment 时的处理
-  const handleAssignmentClick = (assignmentID, hasEvaluateGoal) => {
-    if (hasEvaluateGoal) {
-      // 如果有 evaluate goal，则展开或收起其他组
-      if (expandedAssignment === assignmentID) {
-        setExpandedAssignment(null); // 如果已展开则关闭
-      } else {
-        setExpandedAssignment(assignmentID); // 展开其他组选择
-      }
+  const handleAssignmentClick = (assignmentID) => {
+    if (expandedAssignment === assignmentID) {
+      setExpandedAssignment(null); // 如果已展开则关闭
     } else {
-      // 没有 evaluate goal 时直接跳转到 StudentDoAssignment
-      navigateToAssignment(assignmentID);
+      setExpandedAssignment(assignmentID); // 展开其他组选择
     }
-  };
-
-  // 跳转至 assignment 页面
-  const navigateToAssignment = (assignmentID) => {
-    setAssignmentID(assignmentID);
-    navigation.navigate('StudentDoAssignment', { assignmentID });
   };
 
   // 跳转至选择人员页面
   const navigateToAssignmentChoosePerson = (assignmentID, groupID) => {
     setAssignmentID(assignmentID);
+    setGroupID(groupID);
     navigation.navigate('StudentDoAssignmentChoosePerson', { assignmentID, groupID });
   };
 
@@ -118,7 +104,7 @@ const AssignmentList = () => {
               <View key={assignment.assignmentID}>
                 <TouchableOpacity
                   style={styles.assignmentCard}
-                  onPress={() => handleAssignmentClick(assignment.assignmentID, includeEvaluateGoal)}
+                  onPress={() => handleAssignmentClick(assignment.assignmentID)}
                 >
                   <Text style={styles.assignmentTitle}>{assignment.assignmentTitle}</Text>
                   <Text style={styles.assignmentDueDate}>
@@ -130,15 +116,15 @@ const AssignmentList = () => {
                 </TouchableOpacity>
 
                 {/* 展开时显示其他组 */}
-                {expandedAssignment === assignment.assignmentID && includeEvaluateGoal && (
+                {expandedAssignment === assignment.assignmentID && (
                   <View style={styles.groupList}>
                     {otherGroups.map((group) => (
                       <TouchableOpacity
-                        key={group.id}
+                        key={group.groupID} // 从 API 获取的 groupID
                         style={styles.groupButton}
-                        onPress={() => navigateToAssignmentChoosePerson(assignment.assignmentID, group.id)}
+                        onPress={() => navigateToAssignmentChoosePerson(assignment.assignmentID, group.groupID)}
                       >
-                        <Text style={styles.groupButtonText}>{group.name}</Text>
+                        <Text style={styles.groupButtonText}>{group.groupName}</Text> 
                       </TouchableOpacity>
                     ))}
                   </View>

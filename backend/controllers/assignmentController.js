@@ -150,13 +150,13 @@ exports.updateEvaluateGoals = (req, res) => {
 
   const evaluateGoalsValue = evaluateGoals ? 1 : 0;
 
-  const query = `
+  const updateAssignmentQuery = `
     UPDATE assignments
     SET evaluateGoals = ?
     WHERE assignmentID = ?
   `;
 
-  db.query(query, [evaluateGoalsValue, assignmentID], (err, result) => {
+  db.query(updateAssignmentQuery, [evaluateGoalsValue, assignmentID], (err, result) => {
     if (err) {
       console.error('Error updating evaluateGoals:', err);
       return res.status(500).json({ message: 'Error updating evaluateGoals', error: err });
@@ -166,9 +166,41 @@ exports.updateEvaluateGoals = (req, res) => {
       return res.status(404).json({ message: 'Assignment not found' });
     }
 
-    res.status(200).json({ message: 'evaluateGoals updated successfully' });
+    if (evaluateGoalsValue === 1) {
+      const questionText = 'Please rate the student\'s achievement of their goal.';
+      const questionType = 'goal';
+
+      const insertQuestionQuery = `
+        INSERT INTO questions (assignmentID, questionText, questionType)
+        VALUES (?, ?, ?)
+      `;
+
+      db.query(insertQuestionQuery, [assignmentID, questionText, questionType], (err) => {
+        if (err) {
+          console.error('Error inserting goal question:', err);
+          return res.status(500).json({ message: 'Error inserting goal question', error: err });
+        }
+
+        res.status(200).json({ message: 'evaluateGoals updated and goal question added successfully' });
+      });
+    } else {
+      const deleteGoalQuestionQuery = `
+        DELETE FROM questions
+        WHERE assignmentID = ? AND questionType = 'goal'
+      `;
+
+      db.query(deleteGoalQuestionQuery, [assignmentID], (err) => {
+        if (err) {
+          console.error('Error deleting goal question:', err);
+          return res.status(500).json({ message: 'Error deleting goal question', error: err });
+        }
+
+        res.status(200).json({ message: 'evaluateGoals updated and goal question removed successfully' });
+      });
+    }
   });
 };
+
 
 
 exports.fetchQuestions = (req, res) => {
@@ -250,6 +282,19 @@ exports.publishAssignment = async (req, res) => {
         resolve(result);
       });
     });
+
+    // Check if all students belong to a group
+    const studentsWithoutGroup = students.filter(student => !student.groupID);
+    if (studentsWithoutGroup.length > 0) {
+      // Rollback transaction and return an error
+      await new Promise((resolve, reject) => {
+        db.query('ROLLBACK', (err) => {
+          if (err) return reject(err);
+          resolve();
+        });
+      });
+      return res.status(400).json({ message: 'All students must belong to a group before publishing the assignment.' });
+    }
 
     // 4. Group students by groupID to identify evaluatees outside the group
     const groups = {};

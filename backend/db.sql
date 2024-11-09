@@ -146,25 +146,13 @@ CREATE TABLE questions (
   questionID INT AUTO_INCREMENT PRIMARY KEY,
   assignmentID INT NOT NULL,
   questionText VARCHAR(255) NOT NULL,
-  questionType ENUM('rating', 'multiple_choice', 'free_response') NOT NULL,
+  questionType ENUM('rating', 'multiple_choice', 'free_response', 'goal') NOT NULL,
   questionOptions JSON,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID) ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
 DROP TABLE IF EXISTS answers;
-
-CREATE TABLE answers (
-  answerID INT AUTO_INCREMENT PRIMARY KEY,
-  questionID INT NOT NULL,
-  studentUsername VARCHAR(255) NOT NULL,
-  studentAnswer JSON,
-  ratingValue INT,
-  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY (questionID, studentUsername),
-  FOREIGN KEY (studentUsername) REFERENCES enrollments (studentUsername) ON DELETE CASCADE,
-  FOREIGN KEY (questionID) REFERENCES questions (questionID) ON DELETE CASCADE
-) ENGINE = InnoDB;
 
 DROP TABLE IF EXISTS student_submission;
 
@@ -181,3 +169,15 @@ CREATE TABLE student_submission (
   FOREIGN KEY (studentUsername) REFERENCES enrollments (studentUsername) ON DELETE CASCADE,
   FOREIGN KEY (evaluateeUsername) REFERENCES users (username) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+CREATE TABLE answers (
+  answerID INT AUTO_INCREMENT PRIMARY KEY,
+  submissionID INT NOT NULL,
+  questionID INT NOT NULL,
+  studentAnswer JSON,
+  ratingValue INT,
+  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_answer (submissionID, questionID),
+  FOREIGN KEY (submissionID) REFERENCES student_submission (submissionID) ON DELETE CASCADE,
+  FOREIGN KEY (questionID) REFERENCES questions (questionID) ON DELETE CASCADE
+) ENGINE = InnoDB;

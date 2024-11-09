@@ -2,8 +2,9 @@ import React, { useState, useEffect, useContext } from 'react';
 import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { UserContext } from '../../UserContext';
+import config from '../../config';
 
-const includeEvaluateGoal = true; // 是否启用 evaluation goal
+const server = config.apiUrl;
 
 const AssignmentDetail = () => {
   const navigation = useNavigation();
@@ -11,84 +12,43 @@ const AssignmentDetail = () => {
   const [answers, setAnswers] = useState({});
   const [status, setStatus] = useState('in_progress');
   const [lastSaved, setLastSaved] = useState('');
-  const { assignmentID, username } = useContext(UserContext);
-
-  const [selectedMember, setSelectedMember] = useState({
-    username: 'member1',
-    firstName: 'Alice',
-    lastName: 'Johnson',
-    goal: 'Complete project design'
-  });
-
-  const [memberRatings, setMemberRatings] = useState({});
-  const [goalRatings, setGoalRatings] = useState({});
-  const [localAssignmentResults, setLocalAssignmentResults] = useState({});
+  const { assignmentID, username, submissionID } = useContext(UserContext);
 
   useEffect(() => {
     fetchAssignment();
-    loadSavedData();
   }, []);
 
   const fetchAssignment = async () => {
-    const simulatedAssignment = {
-      assignmentID,
-      assignmentTitle: "Group Project Evaluation",
-      status: "in_progress",
-      lastSavedAt: Date.now(),
-      questions: [
-        { questionID: "q1", questionText: "How well was the project structured?", questionType: "rating" },
-        { questionID: "q2", questionText: "Did the team communicate effectively?", questionType: "multiple_choice", questionOptions: ["Yes", "No"] },
-        { questionID: "q3", questionText: "Describe any challenges faced by the team.", questionType: "free_response" }
-      ],
-      evaluateStage: 1
-    };
-    setAssignment(simulatedAssignment);
-    setStatus(simulatedAssignment.status);
-    setLastSaved(new Date(simulatedAssignment.lastSavedAt).toLocaleString());
-  };
+    try {
+      const response = await fetch(`${server}/api/student/getStudentAnswers/${assignmentID}/${username}/${submissionID}`);
+      const data = await response.json();
 
-  const loadSavedData = () => {
-    const savedData = localAssignmentResults[selectedMember.username] || {};
-    setAnswers(savedData.answers || {});
-    setMemberRatings({ [selectedMember.username]: savedData.ratings || null });
-    setGoalRatings({ [selectedMember.username]: savedData.goalRating || null });
-  };
-
-  const handleSaveAndExit = () => {
-    setLastSaved(new Date().toLocaleString());
-    Alert.alert("Saved", "Your answers have been saved.");
-    navigation.navigate(includeEvaluateGoal ? 'StudentDoAssignmentChoosePerson' : 'StudentCourseDetails');
-  };
-
-  const handleSubmitAndExit = () => {
-    const allQuestionsAnswered = assignment.questions.every((question) => {
-      const answer = answers[question.questionID];
-      return question.questionType !== "free_response" ? answer : answer?.trim() !== '';
-    });
-
-    if (!allQuestionsAnswered) {
-      Alert.alert("Incomplete", "Please answer all questions before submitting.");
-      return;
+      if (response.ok) {
+        if (data.questions && data.questions.length > 0) {
+          setAssignment(data);
+          const initialAnswers = data.questions.reduce((acc, question) => {
+            acc[question.questionID] = question.studentAnswer || '';
+            return acc;
+          }, {});
+          setAnswers(initialAnswers);
+          setStatus(data.status);
+          setLastSaved(new Date(data.lastSavedAt).toLocaleString());
+        }
+      } else {
+        Alert.alert('Error', data.message || 'Failed to fetch assignment.');
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error('Error fetching assignment:', error);
+      Alert.alert('Error', 'An error occurred while fetching the assignment.');
     }
-
-    setStatus('submitted');
-    Alert.alert("Submitted", "Your assignment has been submitted.");
-    navigation.navigate(includeEvaluateGoal ? 'StudentDoAssignmentChoosePerson' : 'StudentCourseDetails');
   };
 
-  const handleMemberRating = (username, rating) => {
+  const handleMultipleChoiceAnswer = (questionID, answer) => {
     if (status === 'submitted') return;
-    setMemberRatings((prevRatings) => ({
-      ...prevRatings,
-      [username]: rating,
-    }));
-  };
-
-  const handleGoalRating = (username, rating) => {
-    if (status === 'submitted') return;
-    setGoalRatings((prevRatings) => ({
-      ...prevRatings,
-      [username]: rating,
+    setAnswers((prevAnswers) => ({
+      ...prevAnswers,
+      [questionID]: answer,
     }));
   };
 
@@ -97,14 +57,6 @@ const AssignmentDetail = () => {
     setAnswers((prevAnswers) => ({
       ...prevAnswers,
       [questionID]: rating,
-    }));
-  };
-
-  const handleMultipleChoiceAnswer = (questionID, answer) => {
-    if (status === 'submitted') return;
-    setAnswers((prevAnswers) => ({
-      ...prevAnswers,
-      [questionID]: answer,
     }));
   };
 
@@ -163,15 +115,21 @@ const AssignmentDetail = () => {
     </View>
   );
 
-  const renderEvaluationGoal = () => (
-    <View style={styles.evaluationGoalContainer}>
-      <Text style={styles.evaluationGoalText}>Evaluate Goal: {selectedMember.goal}</Text>
+  // 处理显示 goal 类型问题
+  const renderGoalQuestion = (question) => (
+    <View key={question.questionID} style={styles.questionContainer}>
+      <Text style={styles.questionText}>
+        {question.questionText}
+      </Text>
+      <Text style={styles.goalText}>
+        {question.goalText}
+      </Text>
       <View style={styles.ratingContainer}>
         {[1, 2, 3, 4, 5].map((score) => (
           <TouchableOpacity
-            key={`${selectedMember.username}-goal-${score}`}
-            style={[styles.ratingButton, goalRatings[selectedMember.username] === score && styles.selectedRating]}
-            onPress={() => handleGoalRating(selectedMember.username, score)}
+            key={`${question.questionID}-${score}`}
+            style={[styles.ratingButton, answers[question.questionID] === score && styles.selectedRating]}
+            onPress={() => handleRatingAnswer(question.questionID, score)}
             disabled={status === 'submitted'}
           >
             <Text style={styles.ratingText}>{score}</Text>
@@ -180,6 +138,75 @@ const AssignmentDetail = () => {
       </View>
     </View>
   );
+
+  const handleSaveAndExit = async () => {
+    try {
+      const response = await fetch(`${server}/api/student/saveStudentAnswers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          submissionID,
+          answers,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Answers saved successfully.');
+        navigation.goBack();
+      } else {
+        Alert.alert('Error', data.message || 'Failed to save answers.');
+      }
+    } catch (error) {
+      console.error('Error saving answers:', error);
+      Alert.alert('Error', 'An error occurred while saving the answers.');
+    }
+  };
+
+  const allQuestionsAnswered = () => {
+    return assignment.questions.every((question) => {
+      const answer = answers[question.questionID];
+      if (question.questionType === 'multiple_choice' || question.questionType === 'rating' || question.questionType === 'goal') {
+        return answer !== '';
+      } else if (question.questionType === 'free_response') {
+        return answer && answer.trim() !== '';
+      }
+      return false;
+    });
+  };
+
+  const handleSubmitAndExit = async () => {
+    if (!allQuestionsAnswered()) {
+      Alert.alert('Incomplete Submission', 'Please answer all questions before submitting.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${server}/api/student/submitStudentAnswers`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          submissionID,
+          answers,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', 'Assignment submitted successfully.');
+        navigation.goBack();
+      } else {
+        Alert.alert('Error', data.message || 'Failed to submit assignment.');
+      }
+    } catch (error) {
+      console.error('Error submitting assignment:', error);
+      Alert.alert('Error', 'An error occurred while submitting the assignment.');
+    }
+  };
 
   if (!assignment) {
     return <Text>Loading...</Text>;
@@ -195,8 +222,6 @@ const AssignmentDetail = () => {
           <Text style={styles.lastModified}>Last saved: {lastSaved}</Text>
         )}
 
-        {includeEvaluateGoal && renderEvaluationGoal()}
-
         {assignment.questions.map((question) => {
           if (question.questionType === 'multiple_choice') {
             return renderMultipleChoiceQuestion(question);
@@ -204,6 +229,8 @@ const AssignmentDetail = () => {
             return renderRatingQuestion(question);
           } else if (question.questionType === 'free_response') {
             return renderFreeResponseQuestion(question);
+          } else if (question.questionType === 'goal') {
+            return renderGoalQuestion(question);
           }
           return null;
         })}
@@ -213,12 +240,13 @@ const AssignmentDetail = () => {
             <TouchableOpacity style={styles.saveButton} onPress={handleSaveAndExit}>
               <Text style={styles.saveButtonText}>Save and Exit</Text>
             </TouchableOpacity>
+
             <TouchableOpacity style={styles.submitButton} onPress={handleSubmitAndExit}>
               <Text style={styles.submitButtonText}>Submit and Exit</Text>
             </TouchableOpacity>
           </>
         ) : (
-          <TouchableOpacity style={styles.returnButton} onPress={() => navigation.navigate('StudentDoAssignmentChoosePerson')}>
+          <TouchableOpacity style={styles.returnButton} onPress={() => navigation.goBack()}>
             <Text style={styles.returnButtonText}>Return</Text>
           </TouchableOpacity>
         )}
@@ -244,7 +272,7 @@ const styles = StyleSheet.create({
   lastModified: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 20,
+    marginBottom: 20, // 添加 margin 以保持排版一致
   },
   questionContainer: {
     marginBottom: 20,
@@ -270,9 +298,9 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   ratingContainer: {
+    marginHorizontal: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginHorizontal: 10,
   },
   ratingButton: {
     padding: 10,
@@ -298,19 +326,9 @@ const styles = StyleSheet.create({
     minHeight: 60,
     textAlignVertical: 'top',
   },
-  evaluationGoalContainer: {
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  evaluationGoalText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
   saveButton: {
     padding: 15,
-    backgroundColor: '#FFCC00',
+    backgroundColor: '#FFCC00',  // 保存按钮颜色
     borderRadius: 5,
     alignItems: 'center',
     marginBottom: 20,
