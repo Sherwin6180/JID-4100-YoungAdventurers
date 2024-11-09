@@ -1,25 +1,42 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { UserContext } from '../../UserContext';
+import config from '../../config';
+
+const server = config.apiUrl;
 
 const GroupMemberList = () => {
   const navigation = useNavigation();
-  const { groupID, groupMembers } = useContext(UserContext);
+  const { groupID, assignmentID, username, setSubmissionID } = useContext(UserContext); // 从上下文中获取groupID, assignmentID和用户名
+  const [groupMembers, setGroupMembers] = useState([]); // 存储组员数据
+  const [groupName, setGroupName] = useState(''); // 存储组的名字
 
-  // 默认组员数据（如果上下文未提供）
-  const members = groupMembers || [
-    { username: 'member1', firstName: 'Alice', lastName: 'Johnson' },
-    { username: 'member2', firstName: 'Bob', lastName: 'Brown' },
-    { username: 'member3', firstName: 'Carol', lastName: 'Davis' },
-  ];
+  useEffect(() => {
+    fetchGroupMembers(); // 组件加载时调用API获取组员数据
+  }, []);
 
-  // 用于跟踪已完成的成员
-  const [completedMembers, setCompletedMembers] = useState({});
+  // 从API获取组员数据
+  const fetchGroupMembers = async () => {
+    try {
+      const response = await fetch(`${server}/api/student/fetchGroupMembersAssignments/${username}/${groupID}/${assignmentID}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setGroupMembers(data.evaluations); // 设置组员数据
+        setGroupName(data.groupName); // 设置组名
+      } else {
+        console.log('Failed to load group members', data.message);
+      }
+    } catch (error) {
+      console.error('An error occurred while fetching group members:', error);
+    }
+  };
 
   // 点击组员跳转至 StudentDoAssignment 页面
   const handleMemberClick = (member) => {
+    setSubmissionID(member.submissionID); // 设置 submissionID
     navigation.navigate('StudentDoAssignment', {
       memberID: member.username,
       onComplete: () => handleCompleteForMember(member.username),
@@ -53,23 +70,27 @@ const GroupMemberList = () => {
 
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.title}>Group Members</Text>
-          <Text style={styles.subtitle}>Students in Group: {groupID}</Text>
+          <Text style={styles.subtitle}>Students in {groupName}</Text>
 
-          {members.map((member) => (
-            <TouchableOpacity
-              key={member.username}
-              style={styles.memberCard}
-              onPress={() => handleMemberClick(member)}
-            >
-              <Text style={styles.memberName}>
-                {member.firstName} {member.lastName} - {completedMembers[member.username] ? 'Complete' : 'Incomplete'}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {groupMembers.length === 0 ? (
+            <Text>No group members available.</Text> // 如果没有组员数据
+          ) : (
+            groupMembers.map((member) => (
+              <TouchableOpacity
+                key={member.submissionID} // 使用 submissionID 作为 key
+                style={styles.memberCard}
+                onPress={() => handleMemberClick(member)}
+              >
+                <Text style={styles.memberName}>
+                  {member.fullName} - {member.status === 'in_progress' ? 'Incomplete' : 'Complete'}
+                </Text>
+              </TouchableOpacity>
+            ))
+          )}
 
           {/* Complete 按钮 */}
           <TouchableOpacity style={styles.completeButton} onPress={() => navigation.navigate('StudentCourseDetails')}>
-            <Text style={styles.completeButtonText}>Complete</Text>
+            <Text style={styles.completeButtonText}>Return</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
