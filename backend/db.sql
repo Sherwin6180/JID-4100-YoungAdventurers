@@ -4,6 +4,7 @@ CREATE DATABASE IF NOT EXISTS evaluation;
 USE evaluation;
 
 DROP TABLE IF EXISTS users;
+
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   username VARCHAR(255) NOT NULL UNIQUE,
@@ -20,6 +21,7 @@ CREATE TABLE users (
 ) ENGINE = innodb;
 
 DROP TABLE IF EXISTS courses;
+
 CREATE TABLE courses (
   courseID VARCHAR(255) NOT NULL,
   courseTitle VARCHAR(255) NOT NULL,
@@ -37,6 +39,7 @@ CREATE TABLE courses (
 ) ENGINE = innodb;
 
 DROP TABLE IF EXISTS sections;
+
 CREATE TABLE sections (
   sectionID VARCHAR(255) NOT NULL,
   sectionDescription TEXT NOT NULL,
@@ -54,6 +57,7 @@ CREATE TABLE sections (
 ) ENGINE = innodb;
 
 DROP TABLE IF EXISTS student_groups;
+
 CREATE TABLE student_groups (
   groupID INT AUTO_INCREMENT PRIMARY KEY,
   courseID VARCHAR(255) NOT NULL,
@@ -71,6 +75,7 @@ CREATE TABLE student_groups (
 ) ENGINE = InnoDB;
 
 DROP TABLE IF EXISTS enrollments;
+
 CREATE TABLE enrollments (
   studentUsername VARCHAR(255) NOT NULL,
   courseID VARCHAR(255) NOT NULL,
@@ -91,6 +96,7 @@ CREATE TABLE enrollments (
 ) ENGINE = innodb;
 
 DROP TABLE IF EXISTS teachings;
+
 CREATE TABLE teachings (
   teacherUsername VARCHAR(255) NOT NULL,
   courseID VARCHAR(255) NOT NULL,
@@ -129,6 +135,7 @@ CREATE TABLE assignments (
 ) ENGINE = InnoDB;
 
 DROP TABLE IF EXISTS goals;
+
 CREATE TABLE goals (
   goalID INT AUTO_INCREMENT PRIMARY KEY,
   studentUsername VARCHAR(255) NOT NULL,
@@ -152,7 +159,6 @@ CREATE TABLE questions (
   FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID) ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
-DROP TABLE IF EXISTS answers;
 
 DROP TABLE IF EXISTS student_submission;
 
@@ -169,6 +175,8 @@ CREATE TABLE student_submission (
   FOREIGN KEY (studentUsername) REFERENCES enrollments (studentUsername) ON DELETE CASCADE,
   FOREIGN KEY (evaluateeUsername) REFERENCES users (username) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+DROP TABLE IF EXISTS answers;
 
 CREATE TABLE answers (
   answerID INT AUTO_INCREMENT PRIMARY KEY,
