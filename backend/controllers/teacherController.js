@@ -3,7 +3,7 @@ const db = require('../db');
 // Create or update a course and add new teachings
 exports.teachNewCourse = (req, res) => {
   const { courseID, courseTitle, courseDescription, courseType, teacherUsername, semester, sections } = req.body;
-
+  console.log(req.body);
   // Validate input
   if (!courseID || !courseTitle || !courseDescription || !courseType || !teacherUsername || !semester || !sections || sections.length === 0) {
     return res.status(400).json({ message: 'Course ID, title, description, type, teacher, semester, and sections are required.' });
@@ -157,6 +157,7 @@ exports.getCoursesByTeacher = (req, res) => {
   if (!teacherUsername) {
     return res.status(400).json({ message: 'Teacher username is required.' });
   }
+  console.log(teacherUsername);
 
   db.query(
     `SELECT DISTINCT c.courseID, c.courseTitle, c.courseDescription, c.courseType, c.semester 

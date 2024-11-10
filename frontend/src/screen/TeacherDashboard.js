@@ -87,7 +87,25 @@ const TeacherDashboard = () => {
             </TouchableOpacity>
 
             {/* Logout 图标 */}
-            <TouchableOpacity style={styles.iconButton} onPress={() => { /* 登出逻辑 */ }}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => {
+                Alert.alert(
+                  "Confirm Logout",
+                  "Are you sure you want to log out?",
+                  [
+                    {
+                      text: "Cancel",
+                      style: "cancel"
+                    },
+                    { 
+                      text: "OK", 
+                      onPress: () => navigation.navigate('Login') 
+                    }
+                  ]
+                );
+              }}
+            >
               <MaterialIcons name="logout" size={30} color="black" />
             </TouchableOpacity>
           </View>

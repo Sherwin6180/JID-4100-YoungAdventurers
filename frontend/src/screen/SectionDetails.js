@@ -72,12 +72,20 @@ const SectionDetail = () => {
           <Text style={styles.sectionHeader}>Section Description</Text>
           <Text style={styles.description}>{sectionDescription}</Text>
 
-          {/* 添加导航到TeacherRosterEdit页面的按钮 */}
+          {/* 添加导航到 TeacherRosterEdit 页面 */}
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => navigation.navigate('TeacherRoster')}
           >
             <Text style={styles.addButtonText}>Student Roster</Text>
+          </TouchableOpacity>
+
+          {/* 新增的 Groups 按钮 */}
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => navigation.navigate('TeacherEditGroups')}
+          >
+            <Text style={styles.addButtonText}>Groups</Text>
           </TouchableOpacity>
 
           {/* 新添加的 Assignment 按钮 */}

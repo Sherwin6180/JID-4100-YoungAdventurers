@@ -1,58 +1,91 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
-import { Picker } from '@react-native-picker/picker'; // 引入 Picker 组件
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Switch } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { useNavigation } from '@react-navigation/native';
-import { UserContext } from '../../UserContext'; // 引入 UserContext
+import { UserContext } from '../../UserContext';
+import { MaterialIcons } from '@expo/vector-icons';
 import config from '../../config';
 
 const server = config.apiUrl;
 
 const EditAssignmentQuestion = () => {
-  const navigation = useNavigation(); // 使用 navigation 来控制页面跳转
-  const [questions, setQuestions] = useState([]); // 存储所有题目
-  const [questionText, setQuestionText] = useState(''); // 当前题目的文本
-  const [questionType, setQuestionType] = useState('multiple_choice'); // 当前题目的类型
-  const [options, setOptions] = useState(['', '', '', '']); // 存储选择题的选项
-  const [ratingRange, setRatingRange] = useState([1, 5]); // 打分题的范围
-  const { assignmentID } = useContext(UserContext); // 从 context 中获取 assignmentID
+  const navigation = useNavigation();
+  const [questions, setQuestions] = useState([]);
+  const [questionText, setQuestionText] = useState('');
+  const [questionType, setQuestionType] = useState('multiple_choice');
+  const [options, setOptions] = useState(['', '', '', '']);
+  const [isPublished, setIsPublished] = useState(false);
+  const [ratingRange, setRatingRange] = useState([1, 5]);
+  const [includeEvaluateGoal, setIncludeEvaluateGoal] = useState(false);
+  const { assignmentID } = useContext(UserContext);
 
-  // Fetch questions from the server when the component loads
   useEffect(() => {
-    fetchQuestions();
+    fetchAssignmentData();
   }, []);
 
-  // Fetch questions from the server
-  const fetchQuestions = async () => {
+  // Fetch questions and current evaluateGoals value
+  const fetchAssignmentData = async () => {
     try {
       const response = await fetch(`${server}/api/assignment/fetchQuestions/${assignmentID}`);
       const data = await response.json();
-
+  
       if (response.ok) {
-        setQuestions(data.questions); // 将获取到的问题设置到 state 中
+        setQuestions(data.questions);
+        setIncludeEvaluateGoal(data.evaluateGoals);
+        setIsPublished(data.published == 1 ? true : false);
       } else {
         Alert.alert('Error', data.message || 'Failed to fetch questions');
       }
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'An error occurred while fetching questions.');
+      Alert.alert('Error', 'An error occurred while fetching assignment data.');
+    }
+  };
+  
+
+  // Update evaluateGoals value on the server
+  const updateEvaluateGoals = async (value) => {
+    try {
+      const response = await fetch(`${server}/api/assignment/updateEvaluateGoals`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          assignmentID,
+          evaluateGoals: value,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to update evaluate goals');
+      }
+    } catch (error) {
+      console.error('Error updating evaluate goals:', error);
+      Alert.alert('Error', 'An error occurred while updating evaluate goals.');
     }
   };
 
-  // 添加题目并将其发送到服务器
+  const handleEvaluateGoalToggle = (value) => {
+    if (isPublished) return; 
+    setIncludeEvaluateGoal(value);
+    updateEvaluateGoals(value);
+  };
+
   const handleAddQuestion = async () => {
     if (!questionText) {
       Alert.alert('Error', 'Please enter the question text.');
       return;
     }
-
+  
     const newQuestion = {
       questionText: questionText,
       questionType: questionType,
       questionOptions: questionType === 'multiple_choice' ? [...options] : null,
       ratingRange: questionType === 'rating' ? ratingRange : null,
     };
-
-    // 构造要发送给 API 的 payload
+  
     const payload = {
       assignmentID,
       questionText: newQuestion.questionText,
@@ -60,7 +93,7 @@ const EditAssignmentQuestion = () => {
       questionOptions: newQuestion.questionType === 'multiple_choice' ? newQuestion.questionOptions : null,
       ratingRange: newQuestion.questionType === 'rating' ? newQuestion.ratingRange : null,
     };
-
+  
     try {
       const response = await fetch(`${server}/api/assignment/addQuestion`, {
         method: 'POST',
@@ -69,18 +102,18 @@ const EditAssignmentQuestion = () => {
         },
         body: JSON.stringify(payload),
       });
-
+  
       const data = await response.json();
-
+  
       if (!response.ok) {
         Alert.alert('Error', data.message || 'Failed to add question');
         return;
       }
-
-      // 添加问题到列表并重置输入框
-      setQuestions([...questions, newQuestion]);
-      setQuestionText(''); // 清空输入框
-      setOptions(['', '', '', '']); // 重置选项
+  
+      // Add the new question to the questions list with the questionID from the backend
+      setQuestions([...questions, { ...newQuestion, questionID: data.question.questionID }]);
+      setQuestionText('');
+      setOptions(['', '', '', '']);
       Alert.alert('Success', 'Question added successfully!');
     } catch (error) {
       console.error(error);
@@ -88,7 +121,72 @@ const EditAssignmentQuestion = () => {
     }
   };
 
-  // 更新选择题的选项
+  const handleDeleteQuestion = (questionID) => {
+    Alert.alert(
+      "Confirm Deletion",
+      "Are you sure you want to delete this question?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(`${server}/api/assignment/deleteQuestion`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ questionID }),
+              });
+  
+              const data = await response.json();
+  
+              if (!response.ok) {
+                Alert.alert('Error', data.message || 'Failed to delete question');
+                return;
+              }
+  
+              setQuestions(questions.filter((question) => question.questionID !== questionID));
+              Alert.alert("Success", "Question deleted successfully!");
+            } catch (error) {
+              console.error("Error deleting question:", error);
+              Alert.alert("Error", "An error occurred while deleting the question.");
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  const handlePublishAssignment = async () => {
+    try {
+      const response = await fetch(`${server}/api/assignment/publishAssignment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ assignmentID }),
+      });
+  
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to publish assignment');
+      }
+  
+      setIsPublished(true); // 设置发布状态为 true
+      Alert.alert('Success', 'Assignment published successfully!');
+    } catch (error) {
+      console.error('Error publishing assignment:', error);
+      Alert.alert('Error', 'An error occurred while publishing the assignment.');
+    }
+  };
+  
+
   const handleOptionChange = (index, text) => {
     const newOptions = [...options];
     newOptions[index] = text;
@@ -100,62 +198,76 @@ const EditAssignmentQuestion = () => {
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.title}>Edit Assignment Questions</Text>
 
-        {/* 问题文本输入 */}
-        <TextInput
-          style={styles.input}
-          placeholder="Enter question text"
-          value={questionText}
-          onChangeText={setQuestionText}
-        />
-
-        {/* 选择题目类型 */}
-        <Text style={styles.sectionTitle}>Select Question Type</Text>
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={questionType}
-            style={styles.picker}
-            onValueChange={(itemValue) => setQuestionType(itemValue)}
-          >
-            <Picker.Item label="Multiple Choice" value="multiple_choice" />
-            <Picker.Item label="Rating" value="rating" />
-            <Picker.Item label="Free Response" value="free_response" />
-          </Picker>
+        {/* 是否包含 evaluate goal 类型的问题 */}
+        <View style={styles.switchContainer}>
+          <Text style={styles.sectionTitle}>Include Goal Evaluation?</Text>
+          <Switch
+            value={includeEvaluateGoal == 1 ? true : false}
+            onValueChange={handleEvaluateGoalToggle}
+            disabled={isPublished}
+          />
         </View>
-        {/* <View style={styles.dropdownContainer}>
-        </View> */}
 
-        {/* 如果是选择题，显示选项输入框 */}
-        {questionType === 'multiple_choice' && (
+        {/* 更明显的分割线 */}
+        <View style={styles.divider} />
+
+        {!isPublished && (
           <>
-            <Text style={styles.sectionTitle}>Enter Options</Text>
-            {options.map((option, index) => (
-              <TextInput
-                key={index}
-                style={styles.input}
-                placeholder={`Option ${index + 1}`}
-                value={option}
-                onChangeText={(text) => handleOptionChange(index, text)}
-              />
-            ))}
+            {/* 问题文本输入 */}
+            <TextInput
+              style={styles.input}
+              placeholder="Enter question text"
+              value={questionText}
+              onChangeText={setQuestionText}
+            />
+
+            {/* 选择题目类型 */}
+            <Text style={styles.sectionTitle}>Select Question Type</Text>
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={questionType}
+                style={styles.picker}
+                onValueChange={(itemValue) => setQuestionType(itemValue)}
+              >
+                <Picker.Item label="Multiple Choice" value="multiple_choice" />
+                <Picker.Item label="Rating" value="rating" />
+                <Picker.Item label="Free Response" value="free_response" />
+              </Picker>
+            </View>
+
+            {/* 如果是选择题，显示选项输入框 */}
+            {questionType === 'multiple_choice' && (
+              <>
+                <Text style={styles.sectionTitle}>Enter Options</Text>
+                {options.map((option, index) => (
+                  <TextInput
+                    key={index}
+                    style={styles.input}
+                    placeholder={`Option ${index + 1}`}
+                    value={option}
+                    onChangeText={(text) => handleOptionChange(index, text)}
+                  />
+                ))}
+              </>
+            )}
+
+            {/* 如果是打分题，显示打分范围 */}
+            {questionType === 'rating' && (
+              <Text style={styles.sectionTitle}>Rating Range: {ratingRange[0]} to {ratingRange[1]}</Text>
+            )}
+
+            {/* Free Response 不需要额外的输入框，仅显示文本框 */}
+            {questionType === 'free_response' && (
+              <Text style={styles.sectionTitle}>This is a free response question.</Text>
+            )}
+
+            {/* 添加问题按钮 */}
+            <TouchableOpacity style={styles.addButton} onPress={handleAddQuestion}>
+              <Text style={styles.addButtonText}>Add Question</Text>
+            </TouchableOpacity>
           </>
         )}
 
-        {/* 如果是打分题，显示打分范围 */}
-        {questionType === 'rating' && (
-          <>
-            <Text style={styles.sectionTitle}>Rating Range: {ratingRange[0]} to {ratingRange[1]}</Text>
-          </>
-        )}
-
-        {/* Free Response 不需要额外的输入框，仅显示文本框 */}
-        {questionType === 'free_response' && (
-          <Text style={styles.sectionTitle}>This is a free response question.</Text>
-        )}
-
-        {/* 添加问题按钮 */}
-        <TouchableOpacity style={styles.addButton} onPress={handleAddQuestion}>
-          <Text style={styles.addButtonText}>Add Question</Text>
-        </TouchableOpacity>
 
         {/* 显示添加的题目 */}
         <Text style={styles.sectionTitle}>Questions Added</Text>
@@ -168,14 +280,30 @@ const EditAssignmentQuestion = () => {
               {question.questionType === 'multiple_choice' && (
                 <Text>Options: {question.questionOptions.join(', ')}</Text>
               )}
+          
+              {!isPublished && (
+                <TouchableOpacity
+                  style={styles.deleteIcon}
+                  onPress={() => handleDeleteQuestion(question.questionID)}
+                >
+                  <MaterialIcons name="delete" size={24} color="#FF6347" />
+                </TouchableOpacity>
+              )}
             </View>
           ))
         )}
 
         {/* 保存作业按钮 */}
         <TouchableOpacity style={styles.saveButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.saveButtonText}>Save Assignment</Text>
+          <Text style={styles.saveButtonText}>Return</Text>
         </TouchableOpacity>
+
+        {!isPublished && (
+          <TouchableOpacity style={styles.publishButton} onPress={handlePublishAssignment}>
+            <Text style={styles.publishButtonText}>Publish Assignment</Text>
+          </TouchableOpacity>
+        )}
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -195,6 +323,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   input: {
     padding: 15,
     backgroundColor: '#f9f9f9',
@@ -203,8 +336,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
   },
-  dropdownContainer: {
-    marginBottom: 20,
+  divider: {
+    height: 2,
+    backgroundColor: '#444',
+    marginVertical: 20,
+    marginHorizontal: 10,
   },
   pickerContainer: {
     marginBottom: 20,
@@ -220,7 +356,7 @@ const styles = StyleSheet.create({
   },
   addButton: {
     padding: 15,
-    backgroundColor: '#FFCC00', // 添加问题按钮的颜色
+    backgroundColor: '#FFCC00',
     borderRadius: 5,
     alignItems: 'center',
     marginBottom: 20,
@@ -253,6 +389,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  deleteIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+  },
+  publishButton: {
+    padding: 15,
+    backgroundColor: '#4CAF50',
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  publishButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  }
 });
 
 export default EditAssignmentQuestion;

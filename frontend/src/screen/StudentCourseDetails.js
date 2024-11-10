@@ -1,38 +1,35 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { UserContext } from '../../UserContext'; // 从 UserContext 获取信息
-import config from '../../config'; // 假设后端 API 的 URL 配置在 config.js 中
+import { UserContext } from '../../UserContext';
+import config from '../../config';
 
-const server = config.apiUrl; // 服务器地址
+const server = config.apiUrl;
 
 const AssignmentList = () => {
   const navigation = useNavigation();
-  const [assignments, setAssignments] = useState([]); // 用于存储作业列表
+  const [assignments, setAssignments] = useState([]);
+  const [expandedAssignment, setExpandedAssignment] = useState(null); // 当前展开的 assignmentID
+  const [otherGroups, setOtherGroups] = useState([]); // 存储真实的 group 数据
 
-  const { courseID, semester, sectionID, username } = useContext(UserContext); // 从 UserContext 中读取 username, courseID, semester, sectionID
-  const { setAssignmentID } = useContext(UserContext);
+  const { courseID, semester, sectionID, username, setAssignmentID, setGroupID } = useContext(UserContext);
 
-  // 使用 useEffect 加载作业列表并在页面 focus 时重新加载
   useEffect(() => {
-    // 监听页面焦点事件，确保每次用户回到页面时刷新作业列表
     const unsubscribe = navigation.addListener('focus', () => {
-      fetchAssignments(); // 获取作业列表
+      fetchAssignments();
     });
-
-    // 清除监听器
     return unsubscribe;
   }, [navigation]);
 
-  // 从后端 API 获取作业列表
   const fetchAssignments = async () => {
     try {
-      const response = await fetch(`${server}/api/student/fetchAssignments/${username}/${courseID}/${semester}/${sectionID}`); // 根据课程信息获取作业列表
+      const response = await fetch(`${server}/api/student/fetchAssignments/${username}/${courseID}/${semester}/${sectionID}`);
       const data = await response.json();
 
       if (response.ok) {
-        setAssignments(data.assignments); // 设置获取到的作业数据
+        setAssignments(data.assignments);
+        setOtherGroups(data.groups); // 从 API 响应中提取 group 列表
       } else {
         console.log('Failed to load assignments', data.message);
       }
@@ -41,27 +38,33 @@ const AssignmentList = () => {
     }
   };
 
-  // 点击作业时跳转到作业页面
+  // 点击 assignment 时的处理
   const handleAssignmentClick = (assignmentID) => {
+    if (expandedAssignment === assignmentID) {
+      setExpandedAssignment(null); // 如果已展开则关闭
+    } else {
+      setExpandedAssignment(assignmentID); // 展开其他组选择
+    }
+  };
+
+  // 跳转至选择人员页面
+  const navigateToAssignmentChoosePerson = (assignmentID, groupID) => {
     setAssignmentID(assignmentID);
-    navigation.navigate('StudentDoAssignment', { assignmentID }); // 传递 assignmentID
+    setGroupID(groupID);
+    navigation.navigate('StudentDoAssignmentChoosePerson', { assignmentID, groupID });
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.outerContainer}>
-        {/* 左边的图标列 */}
         <View style={styles.iconColumn}>
           <View>
-            {/* Dashboard 图标 */}
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => navigation.navigate('StudentDashboard')}
             >
               <MaterialIcons name="dashboard" size={30} color="black" />
             </TouchableOpacity>
-
-            {/* Setting 图标 */}
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => navigation.navigate('Settings')}
@@ -69,46 +72,81 @@ const AssignmentList = () => {
               <MaterialIcons name="settings" size={30} color="black" />
             </TouchableOpacity>
           </View>
-
-          {/* Back 和 Logout 图标，放置在底部 */}
           <View style={styles.bottomIcons}>
-            {/* Back 图标 */}
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => navigation.goBack()}
-            >
+            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
               <MaterialIcons name="arrow-back" size={30} color="black" />
             </TouchableOpacity>
-
-            {/* Logout 图标 */}
-            <TouchableOpacity style={styles.iconButton} onPress={() => { /* 登出逻辑 */ }}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => {
+                Alert.alert(
+                  "Confirm Logout",
+                  "Are you sure you want to log out?",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "OK", onPress: () => navigation.navigate('Login') },
+                  ]
+                );
+              }}
+            >
               <MaterialIcons name="logout" size={30} color="black" />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* 主要内容区域 */}
-        <View style={styles.content}>
+        <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.title}>Assignments</Text>
           {assignments.length === 0 ? (
             <Text>No assignments available.</Text>
           ) : (
             assignments.map((assignment) => (
-              <TouchableOpacity
-                key={assignment.assignmentID}
-                style={styles.assignmentCard}
-                onPress={() => handleAssignmentClick(assignment.assignmentID)}
-              >
-                <Text style={styles.assignmentTitle}>{assignment.assignmentTitle}</Text>
-                <Text style={styles.assignmentDueDate}>Due: {new Date(assignment.dueDateTime).toLocaleString()}</Text>
-                {/* 显示作业的完成状态 */}
-                <Text style={styles.assignmentStatus}>
-                  Status: {assignment.status.replace("_", " ")}
-                </Text>
-              </TouchableOpacity>
+              <View key={assignment.assignmentID}>
+                <TouchableOpacity
+                  style={styles.assignmentCard}
+                  onPress={() => handleAssignmentClick(assignment.assignmentID)}
+                >
+                  <Text style={styles.assignmentTitle}>{assignment.assignmentTitle}</Text>
+                  <Text style={styles.assignmentDueDate}>
+                    Due: {new Date(assignment.dueDateTime).toLocaleString()}
+                  </Text>
+                  <Text style={styles.assignmentStatus}>
+                    Status: {assignment.status.replace("_", " ")}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* 展开时显示其他组 */}
+                {expandedAssignment === assignment.assignmentID && (
+                  <View style={styles.groupList}>
+                    {otherGroups.map((group) => (
+                      <TouchableOpacity
+                        key={group.groupID} // 从 API 获取的 groupID
+                        style={styles.groupButton}
+                        onPress={() => navigateToAssignmentChoosePerson(assignment.assignmentID, group.groupID)}
+                      >
+                        <Text style={styles.groupButtonText}>{group.groupName}</Text> 
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
             ))
           )}
-        </View>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate('StudentSemesterGoals')}
+          >
+            <Text style={styles.buttonText}>My Semester Goals</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate('StudentGroups')}
+          >
+            <Text style={styles.buttonText}>My Group</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
@@ -136,10 +174,10 @@ const styles = StyleSheet.create({
   iconButton: {
     padding: 10,
     borderRadius: 8,
-    backgroundColor: 'transparent', // 默认透明背景
+    backgroundColor: 'transparent',
   },
   bottomIcons: {
-    marginTop: 'auto', // 将 Back 和 Logout 图标推到底部
+    marginTop: 'auto',
   },
   content: {
     flex: 1,
@@ -169,7 +207,34 @@ const styles = StyleSheet.create({
   assignmentStatus: {
     fontSize: 14,
     marginTop: 5,
-    color: '#666', // 你可以根据状态再动态调整颜色
+    color: '#666',
+  },
+  button: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#B3A369',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonText: {
+    fontSize: 18,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  groupList: {
+    paddingLeft: 20,
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  groupButton: {
+    padding: 10,
+    backgroundColor: '#e6e6e6',
+    borderRadius: 5,
+    marginBottom: 5,
+  },
+  groupButtonText: {
+    fontSize: 16,
+    color: '#333',
   },
 });
 

@@ -6,6 +6,7 @@ const teacherRoutes = require('./routes/teacher');
 const classRoutes = require('./routes/class');
 const assignmentRoutes = require('./routes/assignment');
 const studentRoutes = require('./routes/student');
+const groupRoutes = require('./routes/group');
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use('/api/teacher', teacherRoutes);
 app.use('/api/class', classRoutes);
 app.use('/api/assignment', assignmentRoutes);
 app.use('/api/student', studentRoutes);
+app.use('/api/group', groupRoutes);
 
 const PORT = 3000;
 
