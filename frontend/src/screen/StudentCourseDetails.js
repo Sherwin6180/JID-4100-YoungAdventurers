@@ -38,12 +38,38 @@ const AssignmentList = () => {
     }
   };
 
+  // 检查是否为任务设置了目标
+  const checkGoalStatus = async (assignmentID, studentUsername) => {
+    try {
+      const response = await fetch(`${server}/api/student/checkStudentGoal/${assignmentID}/${studentUsername}`);
+      const data = await response.json();
+  
+      if (response.ok) {
+        return data.goalExists; // 返回是否已设置目标
+      } else {
+        console.error('Failed to check goal status', data.message);
+        return false;
+      }
+    } catch (error) {
+      console.error('An error occurred while checking goal status:', error);
+      return false;
+    }
+  };
+
   // 点击 assignment 时的处理
-  const handleAssignmentClick = (assignmentID) => {
-    if (expandedAssignment === assignmentID) {
-      setExpandedAssignment(null); // 如果已展开则关闭
+  const handleAssignmentClick = async (assignmentID, username) => {
+    const hasGoal = await checkGoalStatus(assignmentID, username);
+
+    if (hasGoal) {
+      if (expandedAssignment === assignmentID) {
+        setExpandedAssignment(null); // 如果已展开则关闭
+      } else {
+        setExpandedAssignment(assignmentID); // 展开其他组选择
+      }
     } else {
-      setExpandedAssignment(assignmentID); // 展开其他组选择
+      // 如果没有设置目标，跳转到设置目标页面
+      setAssignmentID(assignmentID);
+      navigation.navigate('StudentSetGoal');
     }
   };
 
@@ -104,7 +130,7 @@ const AssignmentList = () => {
               <View key={assignment.assignmentID}>
                 <TouchableOpacity
                   style={styles.assignmentCard}
-                  onPress={() => handleAssignmentClick(assignment.assignmentID)}
+                  onPress={() => handleAssignmentClick(assignment.assignmentID, username)}
                 >
                   <Text style={styles.assignmentTitle}>{assignment.assignmentTitle}</Text>
                   <Text style={styles.assignmentDueDate}>
@@ -145,6 +171,13 @@ const AssignmentList = () => {
             onPress={() => navigation.navigate('StudentGroups')}
           >
             <Text style={styles.buttonText}>My Group</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate('StudentEvaluationResults')}
+          >
+            <Text style={styles.buttonText}>My Evaluation Results</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>

@@ -2,19 +2,20 @@ import React, { useState, useEffect, useContext } from 'react';
 import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { UserContext } from '../../UserContext'; // 引入 UserContext 用于获取用户信息
+import { UserContext } from '../../UserContext';
 import config from '../../config';
 
 const server = config.apiUrl;
+
 const MyGroup = () => {
   const navigation = useNavigation();
-  const { courseID, semester, sectionID, username, firstName, lastName } = useContext(UserContext); // 获取用户上下文信息
+  const { courseID, semester, sectionID, username } = useContext(UserContext);
 
-  const [groups, setGroups] = useState([]); // 用于存储从后端获取的组信息
+  const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [joinedGroupId, setJoinedGroupId] = useState(null); // 记录用户已加入的组ID
+  const [joinedGroup, setJoinedGroup] = useState(null);
 
-  // 在组件加载时调用 fetchGroups API
+  // Fetch groups and determine if the user has joined a group
   const fetchGroups = async () => {
     try {
       const response = await fetch(`${server}/api/group/fetchGroups/${courseID}/${sectionID}/${semester}`);
@@ -22,7 +23,10 @@ const MyGroup = () => {
         throw new Error('Failed to fetch groups');
       }
       const data = await response.json();
-      setGroups(data.groups); // 更新组数据
+      const joined = data.groups.find(group => group.students.some(student => student.username === username));
+      
+      setGroups(data.groups);
+      setJoinedGroup(joined || null);
     } catch (error) {
       console.error('Error fetching groups:', error);
       Alert.alert('Error', 'Failed to load groups.');
@@ -30,10 +34,10 @@ const MyGroup = () => {
   };
 
   useEffect(() => {
-    fetchGroups(); // 调用函数获取组信息
+    fetchGroups();
   }, [courseID, sectionID, semester]);
 
-  // 选择组并查看组员，或关闭展开的组
+  // Toggle group expansion to show or hide its members
   const handleSelectGroup = (group) => {
     if (selectedGroup && selectedGroup.groupID === group.groupID) {
       setSelectedGroup(null);
@@ -42,7 +46,7 @@ const MyGroup = () => {
     }
   };
 
-  // 增加用户到当前组
+  // Handle joining a new group
   const handleJoinGroup = async () => {
     try {
       if (selectedGroup.students.find((member) => member.username === username)) {
@@ -50,12 +54,9 @@ const MyGroup = () => {
         return;
       }
   
-      // 调用 joinGroup API
       const response = await fetch(`${server}/api/student/joinGroup`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           studentUsername: username,
           groupID: selectedGroup.groupID,
@@ -70,12 +71,7 @@ const MyGroup = () => {
       }
   
       Alert.alert('Success', 'Joined the group successfully!');
-  
-      // 重新获取最新的组信息并更新状态
       await fetchGroups();
-  
-      // 更新本地状态
-      setJoinedGroupId(selectedGroup.groupID);
     } catch (error) {
       console.error('Error joining group:', error);
       Alert.alert('Error', 'Failed to join the group.');
@@ -85,16 +81,14 @@ const MyGroup = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.outerContainer}>
-        {/* 左边的图标列 */}
+        {/* Sidebar icons */}
         <View style={styles.iconColumn}>
-          <View>
-            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('StudentDashboard')}>
-              <MaterialIcons name="dashboard" size={30} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')}>
-              <MaterialIcons name="settings" size={30} color="black" />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('StudentDashboard')}>
+            <MaterialIcons name="dashboard" size={30} color="black" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')}>
+            <MaterialIcons name="settings" size={30} color="black" />
+          </TouchableOpacity>
           <View style={styles.bottomIcons}>
             <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
               <MaterialIcons name="arrow-back" size={30} color="black" />
@@ -113,20 +107,35 @@ const MyGroup = () => {
           </View>
         </View>
 
-        {/* 主页面内容区域 */}
+        {/* Main content */}
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.title}>My Groups</Text>
 
-          {/* 组列表 */}
-          <View style={styles.groupList}>
-            {Array.isArray(groups) && groups.length > 0 ? (
-              groups.map((group) => (
+          {/* Current Group Section */}
+          {joinedGroup ? (
+            <View style={styles.currentGroup}>
+              <Text style={styles.currentGroupTitle}>Current Group: {joinedGroup.groupName}</Text>
+              {joinedGroup.students.map((member) => (
+                <Text key={member.username} style={styles.memberText}>
+                  {member.firstName} {member.lastName}
+                </Text>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.noGroupText}>You have not joined any group.</Text>
+          )}
+
+          {/* Other Groups */}
+          <Text style={styles.subtitle}>Available Groups</Text>
+          {Array.isArray(groups) && groups.length > 0 ? (
+            groups
+              .filter(group => !joinedGroup || group.groupID !== joinedGroup.groupID)
+              .map((group) => (
                 <View key={group.groupID}>
                   <TouchableOpacity
                     style={[
                       styles.groupButton,
                       selectedGroup && selectedGroup.groupID === group.groupID && styles.selectedGroupButton,
-                      joinedGroupId === group.groupID && styles.joinedGroupButton,
                     ]}
                     onPress={() => handleSelectGroup(group)}
                   >
@@ -135,7 +144,7 @@ const MyGroup = () => {
 
                   {selectedGroup && selectedGroup.groupID === group.groupID && (
                     <View style={styles.groupDetail}>
-                      <Text style={styles.groupDetailTitle}>Members of {selectedGroup.groupName}:</Text>
+                      <Text style={styles.groupDetailTitle}>Members:</Text>
                       {selectedGroup.students.map((member) => (
                         <Text key={member.username} style={styles.memberText}>
                           {member.firstName} {member.lastName}
@@ -151,17 +160,16 @@ const MyGroup = () => {
                   )}
                 </View>
               ))
-            ) : (
-              <Text>No groups available.</Text>
-            )}
-          </View>
+          ) : (
+            <Text>No groups available.</Text>
+          )}
         </ScrollView>
       </View>
     </SafeAreaView>
   );
 };
 
-// 样式定义
+// Styles
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -197,8 +205,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
-  groupList: {
+  subtitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  currentGroup: {
+    padding: 15,
+    backgroundColor: '#DFF2D8', // Light green background for current group
+    borderColor: '#B3A369',
+    borderWidth: 1,
+    borderRadius: 5,
     marginBottom: 20,
+  },
+  currentGroupTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  noGroupText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
+    fontStyle: 'italic',
   },
   groupButton: {
     padding: 15,
@@ -211,9 +241,6 @@ const styles = StyleSheet.create({
   },
   selectedGroupButton: {
     backgroundColor: '#B3A369',
-  },
-  joinedGroupButton: {
-    backgroundColor: '#DFF2D8', // 柔和的浅绿色背景
   },
   groupButtonText: {
     fontSize: 18,
@@ -243,14 +270,7 @@ const styles = StyleSheet.create({
   },
   joinButton: {
     padding: 10,
-    backgroundColor: '#87CEEB', // 柔和的蓝色
-    borderRadius: 5,
-    alignItems: 'center',
-    width: 80,
-  },
-  leaveButton: {
-    padding: 10,
-    backgroundColor: '#FFA07A', // 柔和的橙色
+    backgroundColor: '#87CEEB', // Light blue color for Join button
     borderRadius: 5,
     alignItems: 'center',
     width: 80,

@@ -1,54 +1,87 @@
-import React, { useState } from 'react';
-import { SafeAreaView, View, Text, TouchableOpacity, TextInput, StyleSheet, Alert, ScrollView } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet, TextInput, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { UserContext } from '../../UserContext';
+import config from '../../config';
+
+const server = config.apiUrl;
 
 const StudentSemesterGoals = () => {
   const navigation = useNavigation();
-  
-  // 本地管理学期目标的阶段
-  const [goalStages, setGoalStages] = useState([]);
-  const [newGoalText, setNewGoalText] = useState('');
-  const [isAdding, setIsAdding] = useState(false);
+  const [goals, setGoals] = useState([]);
+  const [editingGoalId, setEditingGoalId] = useState(null);
+  const [editedGoalText, setEditedGoalText] = useState('');
+  const { courseID, sectionID, semester, username } = useContext(UserContext);
 
-  // 添加新阶段的确认弹窗
-  const handleAddGoal = () => {
-    if (newGoalText.trim() === '') {
-      Alert.alert('Error', 'Please enter a goal.');
-      return;
+  useEffect(() => {
+    fetchGoalsForSection();
+  }, []);
+
+  // Fetch the list of goals for the current section
+  const fetchGoalsForSection = async () => {
+    try {
+      const response = await fetch(`${server}/api/student/getGoalsForSection/${courseID}/${sectionID}/${semester}/${username}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        // Filter out goals with empty text
+        const filteredGoals = data.goals.filter(goal => goal.goalText && goal.goalText.trim() !== '');
+        setGoals(filteredGoals);
+      } else {
+        Alert.alert('Error', data.message || 'Failed to fetch goals.');
+      }
+    } catch (error) {
+      console.error('Error fetching goals:', error);
+      Alert.alert('Error', 'An error occurred while fetching goals.');
     }
+  };
 
-    Alert.alert(
-      "Confirm Save",
-      "Are you sure you want to save this goal as a new stage?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
+  // Begin editing a goal
+  const handleEditGoal = (goal) => {
+    setEditingGoalId(goal.assignmentID);
+    setEditedGoalText(goal.goalText);
+  };
+
+  // Save the updated goal text to the server
+  const handleSaveGoal = async (assignmentID) => {
+    try {
+      const response = await fetch(`${server}/api/student/updateGoal`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          text: "Save",
-          onPress: () => {
-            const newGoalStage = {
-              id: goalStages.length + 1,
-              text: newGoalText,
-            };
-            setGoalStages([...goalStages, newGoalStage]);
-            setNewGoalText('');
-            setIsAdding(false);
-          },
-        },
-      ]
-    );
+        body: JSON.stringify({
+          assignmentID,
+          studentUsername: username,
+          goalText: editedGoalText,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        // Update the goal list with the edited goal text
+        setGoals(goals.map(goal => 
+          goal.assignmentID === assignmentID ? { ...goal, goalText: editedGoalText } : goal
+        ));
+        setEditingGoalId(null);
+        Alert.alert('Success', 'Goal updated successfully.');
+      } else {
+        Alert.alert('Error', data.message || 'Failed to update goal.');
+      }
+    } catch (error) {
+      console.error('Error updating goal:', error);
+      Alert.alert('Error', 'An error occurred while updating the goal.');
+    }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.outerContainer}>
-        {/* 左边的图标列 */}
+        {/* Sidebar with icons */}
         <View style={styles.iconColumn}>
           <View>
-            {/* Dashboard 图标 */}
+            {/* Dashboard icon */}
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => navigation.navigate('StudentDashboard')}
@@ -56,7 +89,7 @@ const StudentSemesterGoals = () => {
               <MaterialIcons name="dashboard" size={30} color="black" />
             </TouchableOpacity>
 
-            {/* Setting 图标 */}
+            {/* Settings icon */}
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => navigation.navigate('Settings')}
@@ -65,34 +98,18 @@ const StudentSemesterGoals = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Back 和 Logout 图标，放置在底部 */}
+          {/* Bottom icons: Back and Logout */}
           <View style={styles.bottomIcons}>
-            {/* Back 图标 */}
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => navigation.goBack()}
-            >
+            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.goBack()}>
               <MaterialIcons name="arrow-back" size={30} color="black" />
             </TouchableOpacity>
-
-            {/* Logout 图标 */}
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => {
-                Alert.alert(
-                  "Confirm Logout",
-                  "Are you sure you want to log out?",
-                  [
-                    {
-                      text: "Cancel",
-                      style: "cancel"
-                    },
-                    { 
-                      text: "OK", 
-                      onPress: () => navigation.navigate('Login') 
-                    }
-                  ]
-                );
+                Alert.alert("Confirm Logout", "Are you sure you want to log out?", [
+                  { text: "Cancel", style: "cancel" },
+                  { text: "OK", onPress: () => navigation.navigate('Login') },
+                ]);
               }}
             >
               <MaterialIcons name="logout" size={30} color="black" />
@@ -100,53 +117,50 @@ const StudentSemesterGoals = () => {
           </View>
         </View>
 
-        {/* 主要内容区域 */}
-        <View style={styles.content}>
+        {/* Main content area */}
+        <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.title}>My Semester Goals</Text>
 
-          {/* 目标阶段列表 */}
-          <ScrollView contentContainerStyle={styles.goalListContainer}>
-            {goalStages.length === 0 ? (
-              <Text style={styles.noGoalsText}>No goals added yet.</Text>
-            ) : (
-              goalStages.map((item) => (
-                <View key={item.id}>
-                  <View style={styles.goalStage}>
-                    <Text style={styles.goalStageText}>Stage {item.id}: {item.text}</Text>
-                  </View>
-                  {/* 分割线 */}
-                  <View style={styles.divider} />
-                </View>
-              ))
-            )}
+          {/* Display goals */}
+          {goals.length === 0 ? (
+            <Text style={styles.noGoalsText}>No goals added yet.</Text>
+          ) : (
+            goals.map((goal) => (
+              <View key={goal.assignmentID} style={styles.goalCard}>
+                <Text style={styles.assignmentTitle}>{goal.assignmentTitle}</Text>
 
-            {/* 新目标输入框和保存按钮（动态移动至最后一个阶段下方） */}
-            {isAdding ? (
-              <View style={styles.goalInputContainer}>
-                <TextInput
-                  style={styles.goalInput}
-                  multiline
-                  value={newGoalText}
-                  onChangeText={setNewGoalText}
-                  placeholder="Enter your goals for this stage"
-                />
-                <TouchableOpacity style={styles.saveButton} onPress={handleAddGoal}>
-                  <Text style={styles.saveButtonText}>Save</Text>
-                </TouchableOpacity>
+                {/* Goal text input for editing */}
+                {editingGoalId === goal.assignmentID ? (
+                  <TextInput
+                    style={styles.goalInput}
+                    value={editedGoalText}
+                    onChangeText={setEditedGoalText}
+                    multiline
+                  />
+                ) : (
+                  <Text style={styles.goalText}>{goal.goalText}</Text>
+                )}
+
+                {/* Edit and Save buttons */}
+                {editingGoalId === goal.assignmentID ? (
+                  <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveGoal(goal.assignmentID)}>
+                    <Text style={styles.saveButtonText}>Save</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity style={styles.editButton} onPress={() => handleEditGoal(goal)}>
+                    <Text style={styles.editButtonText}>Edit</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-            ) : (
-              <TouchableOpacity style={styles.addButton} onPress={() => setIsAdding(true)}>
-                <Text style={styles.addButtonText}>Add New Stage Goal</Text>
-              </TouchableOpacity>
-            )}
-          </ScrollView>
-        </View>
+            ))
+          )}
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
 };
 
-// 样式定义
+// Styles
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -182,30 +196,25 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
-  goalListContainer: {
-    flexGrow: 1,
-  },
-  goalStage: {
+  goalCard: {
+    padding: 15,
     backgroundColor: '#f9f9f9',
     borderColor: '#B3A369',
     borderWidth: 1,
     borderRadius: 5,
-    padding: 15,
+    marginBottom: 10,
   },
-  goalStageText: {
+  assignmentTitle: {
     fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  goalText: {
+    fontSize: 16,
     color: '#333',
   },
-  divider: {
-    height: 1,
-    backgroundColor: '#B3A369',
-    marginVertical: 10,
-  },
-  goalInputContainer: {
-    marginTop: 20,
-  },
   goalInput: {
-    fontSize: 18,
+    fontSize: 16,
     color: '#333',
     minHeight: 80,
     backgroundColor: '#f9f9f9',
@@ -215,27 +224,28 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
-  saveButton: {
+  editButton: {
     padding: 10,
-    backgroundColor: '#B3A369',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  saveButtonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  addButton: {
-    padding: 15,
-    backgroundColor: '#B3A369',
-    borderRadius: 8,
+    backgroundColor: '#FFA500',
+    borderRadius: 5,
     alignItems: 'center',
     marginTop: 10,
   },
-  addButtonText: {
-    fontSize: 16,
+  editButtonText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  saveButton: {
+    padding: 10,
+    backgroundColor: '#6ca06c',
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: 'bold',
   },
   noGoalsText: {

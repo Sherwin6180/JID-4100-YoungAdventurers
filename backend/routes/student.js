@@ -9,6 +9,11 @@ router.post('/submitStudentAnswers', studentController.submitStudentAnswers);
 router.get('/fetchAssignments/:studentUsername/:courseID/:semester/:sectionID', studentController.fetchAssignments);
 router.post('/joinGroup', studentController.joinGroup);
 router.get('/fetchGroupMembersAssignments/:username/:groupID/:assignmentID', studentController.fetchGroupMembersAssignments);
-router.get('/fetchStudentQuestions/:studentUsername/:courseID/:semester/:sectionID/:assignmentID', studentController.fetchStudentQuestions);
+router.post('/setGoal', studentController.setGoal);
+router.get('/checkStudentGoal/:assignmentID/:studentUsername', studentController.checkStudentGoal);
+router.get('/getGoalsForSection/:courseID/:sectionID/:semester/:studentUsername', studentController.getStudentGoalsForSection);
+router.post('/updateGoal', studentController.updateGoal);
+router.get('/checkGroupMembership/:studentUsername/:courseID/:sectionID/:semester', studentController.checkGroupMembership);
+router.get('/getAverageGoalRatings/:studentUsername/:courseID/:sectionID/:semester', studentController.getAverageGoalRatings);
 
 module.exports = router;

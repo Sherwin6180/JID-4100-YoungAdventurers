@@ -19,6 +19,8 @@ import StudentSemesterGoalsScreen from './src/screen/StudentSemesterGoals';
 import TeacherEditGroupsScreen from './src/screen/TeacherEditGroups';
 import StudentGroupsScreen from './src/screen/StudentGroups';
 import StudentDoAssignmentChoosePersonScreen from './src/screen/StudentDoAssigtnmentChoosePerson';
+import StudentSetGoal from './src/screen/StudentSetGoal';
+import StudentEvaluationResults from './src/screen/StudentEvaluationResults';
 import { UserContext, UserProvider } from './UserContext';
 
 const Stack = createNativeStackNavigator();
@@ -143,6 +145,18 @@ const App = () => {
           <Stack.Screen 
             name="StudentDoAssignmentChoosePerson" 
             component={StudentDoAssignmentChoosePersonScreen} 
+          /> 
+          
+          {/* Student Set Goal Screen*/}
+          <Stack.Screen 
+            name="StudentSetGoal" 
+            component={StudentSetGoal} 
+          /> 
+
+          {/* Student Evaluation Screen*/}
+          <Stack.Screen 
+            name="StudentEvaluationResults" 
+            component={StudentEvaluationResults} 
           /> 
         </Stack.Navigator>
       </UserProvider>
