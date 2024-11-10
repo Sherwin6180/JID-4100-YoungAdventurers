@@ -9,6 +9,6 @@ router.post('/submitStudentAnswers', studentController.submitStudentAnswers);
 router.get('/fetchAssignments/:studentUsername/:courseID/:semester/:sectionID', studentController.fetchAssignments);
 router.post('/joinGroup', studentController.joinGroup);
 router.get('/fetchGroupMembersAssignments/:username/:groupID/:assignmentID', studentController.fetchGroupMembersAssignments);
-router.get('/fetchStudentQuestions/:studentUsername/:courseID/:semester/:sectionID/:assignmentID', studentController.fetchStudentQuestions);
+router.get('/setGoal', studentController.setGoal);
 
 module.exports = router;

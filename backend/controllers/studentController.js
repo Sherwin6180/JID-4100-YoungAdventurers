@@ -383,66 +383,25 @@ exports.fetchGroupMembersAssignments = (req, res) => {
   });
 };
 
-exports.fetchStudentQuestions = (req, res) => {
-  const { studentUsername, courseID, semester, sectionID, assignmentID } = req.params;
+exports.setGoal = (req, res) => {
+  const { assignmentID, studentUsername, goalText } = req.body;
 
-  if (!studentUsername || !courseID || !semester || !sectionID || !assignmentID) {
-    return res.status(400).json({ message: 'All parameters (studentUsername, courseID, semester, sectionID, assignmentID) are required.' });
+  if (!assignmentID || !studentUsername || !goalText) {
+    return res.status(400).json({ message: 'Assignment ID, Student Username, and Goal Text are required.' });
   }
 
   const query = `
-    SELECT q.questionID, q.questionText, q.questionType, q.questionOptions, 
-           a.assignmentTitle, a.evaluateGoals, a.published
-    FROM questions q
-    JOIN assignments a ON q.assignmentID = a.assignmentID
-    WHERE q.assignmentID = ?
+    INSERT INTO goals (assignmentID, studentUsername, goalText)
+    VALUES (?, ?, ?)
+    ON DUPLICATE KEY UPDATE goalText = VALUES(goalText)
   `;
 
-  db.query(query, [assignmentID], async (err, questions) => {
+  db.query(query, [assignmentID, studentUsername, goalText], (err, result) => {
     if (err) {
       console.error('Database error:', err);
       return res.status(500).json({ message: 'Database error', error: err });
     }
 
-    if (questions.length === 0) {
-      return res.status(404).json({ message: 'No questions found for this assignment.' });
-    }
-
-    const { assignmentTitle, evaluateGoals, published } = questions[0];
-
-    const enrichedQuestions = await Promise.all(questions.map(async (question) => {
-      if (question.questionType === 'goal') {
-        return new Promise((resolve, reject) => {
-          const goalQuery = `
-            SELECT goalText 
-            FROM goals 
-            WHERE studentUsername = ? AND assignmentID = ?
-          `;
-
-          db.query(goalQuery, [studentUsername, assignmentID], (goalErr, goalResults) => {
-            if (goalErr) {
-              console.error('Database error:', goalErr);
-              return reject(goalErr);
-            }
-
-            let enrichedQuestionText = question.questionText;
-            if (goalResults.length > 0) {
-              enrichedQuestionText += `\n\nGoal:\n${goalResults[0].goalText}`;
-            } else {
-              enrichedQuestionText += `\n\nThe student hasn't set the goal yet. Please come back later.`;
-            }
-
-            resolve({
-              ...question,
-              questionText: enrichedQuestionText
-            });
-          });
-        });
-      } else {
-        return question;
-      }
-    }));
-
-    res.status(200).json({ assignmentTitle, evaluateGoals, published, questions: enrichedQuestions });
+    res.status(200).json({ message: 'Goal set successfully' });
   });
 };
