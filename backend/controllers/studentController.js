@@ -115,7 +115,6 @@ exports.getStudentAnswers = (req, res) => {
 
 exports.saveStudentAnswers = (req, res) => {
   const { submissionID, answers } = req.body;
-  console.log(req.body);
 
   if (!submissionID || !answers) {
     return res.status(400).json({ message: 'Submission ID and Answers are required.' });
@@ -143,13 +142,31 @@ exports.saveStudentAnswers = (req, res) => {
     });
   });
 
-  // Execute all answer queries
-  Promise.all(queries)
+  // Add a query to update the last_saved_at timestamp
+  const updateTimestampQuery = `
+    UPDATE student_submission
+    SET last_saved_at = NOW()
+    WHERE submissionID = ?
+  `;
+
+  const timestampPromise = new Promise((resolve, reject) => {
+    db.query(updateTimestampQuery, [submissionID], (err, result) => {
+      if (err) {
+        console.error('Database error updating timestamp:', err);
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
+
+  // Execute all answer queries and then update the timestamp
+  Promise.all([...queries, timestampPromise])
     .then(() => {
-      res.status(200).json({ message: 'Answers saved successfully' });
+      res.status(200).json({ message: 'Answers saved successfully and timestamp updated' });
     })
     .catch((err) => {
-      console.error('Error saving answers:', err);
+      console.error('Error saving answers or updating timestamp:', err);
       res.status(500).json({ message: 'Database error', error: err });
     });
 };

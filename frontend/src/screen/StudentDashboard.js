@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { SafeAreaView, StatusBar, View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
-import { MaterialIcons } from '@expo/vector-icons'; // 使用 MaterialIcons 图标
+import { MaterialIcons } from '@expo/vector-icons';
 import config from '../../config';
 import { UserContext } from '../../UserContext';
 
@@ -10,21 +10,21 @@ const server = config.apiUrl;
 const StudentDashboard = () => {
   const isFocused = useIsFocused();
   const navigation = useNavigation();
-  const { username, setCourseID, setSemester, setSectionID } = useContext(UserContext); // 获取 sectionID, courseID, semester
+  const { username, setCourseID, setSemester, setSectionID } = useContext(UserContext);
 
-  // 当前课程列表和之前课程列表的状态
+  // Current and previous course lists, and loading status
   const [currentCourses, setCurrentCourses] = useState([]);
   const [previousCourses, setPreviousCourses] = useState([]);
-  const [isLoading, setIsLoading] = useState(false); // 将加载状态设置为 false
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isFocused) {
-      fetchCourses(); // 每次页面聚焦时获取最新课程数据
+      fetchCourses(); // Fetch courses each time the page is focused
     }
   }, [isFocused]);
 
   const fetchCourses = async () => {
-    setIsLoading(true); // 开始加载
+    setIsLoading(true);
     try {
       const response = await fetch(`${server}/api/student/getSectionsByStudent/${username}`);
       const data = await response.json();
@@ -38,19 +38,38 @@ const StudentDashboard = () => {
         Alert.alert('Error', data.message || 'Failed to fetch sections');
       }
     } catch (error) {
-      console.log(error);
+      console.error('Error fetching courses:', error);
       Alert.alert('Error', 'An error occurred while fetching sections.');
     } finally {
-      setIsLoading(false); // 加载结束
+      setIsLoading(false);
     }
   };
 
-  // 点击后跳转到课程详情页面，设置 courseID、semester 和 sectionID
-  const handleCourseClick = (courseID, sectionID, semester) => {
+  // Check if the student is in a group for the course and navigate accordingly
+  const handleCourseClick = async (courseID, sectionID, semester) => {
     setCourseID(courseID);
     setSemester(semester);
     setSectionID(sectionID);
-    navigation.navigate('StudentCourseDetails');
+
+    try {
+      const response = await fetch(`${server}/api/student/checkGroupMembership/${username}/${courseID}/${sectionID}/${semester}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        if (data.isMember) {
+          navigation.navigate('StudentCourseDetails'); // If in group, go to course details
+        } else {
+          Alert.alert('Notice', 'Please join a group first.', [
+            { text: 'OK', onPress: () => navigation.navigate('StudentGroups') },
+          ]);
+        }
+      } else {
+        Alert.alert('Error', data.message || 'Failed to check group membership');
+      }
+    } catch (error) {
+      console.error('Error checking group membership:', error);
+      Alert.alert('Error', 'An error occurred while checking group membership.');
+    }
   };
 
   return (
@@ -58,37 +77,27 @@ const StudentDashboard = () => {
       <StatusBar barStyle="light-content" hidden={true} />
 
       <View style={styles.outerContainer}>
-        {/* 左边的图标列 */}
+        {/* Left icons column */}
         <View style={styles.iconColumn}>
           <View>
-            {/* Dashboard 图标 */}
-            <TouchableOpacity
-              style={[styles.iconButton, styles.activeIconButton]}
-              disabled={true} // 在 Dashboard 页面禁用 Dashboard 图标
-            >
+            {/* Dashboard icon */}
+            <TouchableOpacity style={[styles.iconButton, styles.activeIconButton]} disabled={true}>
               <MaterialIcons name="dashboard" size={30} color="gray" />
             </TouchableOpacity>
 
-            {/* Setting 图标 */}
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => navigation.navigate('Settings')}
-            >
+            {/* Settings icon */}
+            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')}>
               <MaterialIcons name="settings" size={30} color="black" />
             </TouchableOpacity>
           </View>
 
-          {/* Back 和 Logout 图标，放置在底部 */}
+          {/* Back and Logout icons, positioned at the bottom */}
           <View style={styles.bottomIcons}>
-            {/* Back 图标 */}
-            <TouchableOpacity
-              style={styles.iconButton}
-              disabled={true} // 在 Dashboard 页面禁用 Back 图标
-            >
+            <TouchableOpacity style={styles.iconButton} disabled={true}>
               <MaterialIcons name="arrow-back" size={30} color="gray" />
             </TouchableOpacity>
 
-            {/* Logout 图标 */}
+            {/* Logout icon */}
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => {
@@ -96,14 +105,8 @@ const StudentDashboard = () => {
                   "Confirm Logout",
                   "Are you sure you want to log out?",
                   [
-                    {
-                      text: "Cancel",
-                      style: "cancel"
-                    },
-                    { 
-                      text: "OK", 
-                      onPress: () => navigation.navigate('Login') 
-                    }
+                    { text: "Cancel", style: "cancel" },
+                    { text: "OK", onPress: () => navigation.navigate('Login') },
                   ]
                 );
               }}
@@ -113,13 +116,13 @@ const StudentDashboard = () => {
           </View>
         </View>
 
-        {/* 主要内容区域 */}
+        {/* Main content area */}
         <ScrollView contentContainerStyle={styles.container}>
           {isLoading ? (
             <Text>Loading courses...</Text>
           ) : (
             <>
-              {/* 显示当前课程部分 */}
+              {/* Display current courses */}
               <Text style={styles.sectionTitle}>Current Courses</Text>
               {currentCourses.length === 0 ? (
                 <Text>No current courses available.</Text>
@@ -131,16 +134,14 @@ const StudentDashboard = () => {
                       style={styles.courseCard}
                       onPress={() => handleCourseClick(course.courseID, course.sectionID, course.semester)}
                     >
-                      <Text style={styles.courseTitle}>
-                        {`${course.courseID}-${course.sectionID}`}
-                      </Text>
+                      <Text style={styles.courseTitle}>{`${course.courseID}-${course.sectionID}`}</Text>
                       <Text style={styles.courseDescription}>{course.courseTitle}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
               )}
 
-              {/* 显示之前课程部分 */}
+              {/* Display previous courses */}
               <Text style={styles.sectionTitle}>Previous Courses</Text>
               {previousCourses.length === 0 ? (
                 <Text>No previous courses available.</Text>
@@ -152,9 +153,7 @@ const StudentDashboard = () => {
                       style={styles.courseCard}
                       onPress={() => handleCourseClick(course.courseID, course.sectionID, course.semester)}
                     >
-                      <Text style={styles.courseTitle}>
-                        {`${course.courseID}-${course.sectionID}`}
-                      </Text>
+                      <Text style={styles.courseTitle}>{`${course.courseID}-${course.sectionID}`}</Text>
                       <Text style={styles.courseDescription}>{course.courseTitle}</Text>
                     </TouchableOpacity>
                   ))}
@@ -168,7 +167,7 @@ const StudentDashboard = () => {
   );
 };
 
-// 样式定义保持不变
+// Styles remain unchanged
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -190,15 +189,15 @@ const styles = StyleSheet.create({
   iconButton: {
     padding: 10,
     borderRadius: 8,
-    backgroundColor: 'transparent', // 默认透明背景
+    backgroundColor: 'transparent',
   },
   activeIconButton: {
-    backgroundColor: '#f9f9f9', // Dashboard 图标无缝衔接右侧区域的背景色
-    borderTopLeftRadius: 8, // 保持左侧的圆角
-    borderBottomLeftRadius: 8, // 保持左侧的圆角
-    borderTopRightRadius: 0, // 右上角改为直角
-    borderBottomRightRadius: 0, // 右下角改为直角
-    width: '100%', // 确保图标占据整个列宽，实现无缝连接
+    backgroundColor: '#f9f9f9',
+    borderTopLeftRadius: 8,
+    borderBottomLeftRadius: 8,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+    width: '100%',
   },
   bottomIcons: {
     marginTop: 'auto',
