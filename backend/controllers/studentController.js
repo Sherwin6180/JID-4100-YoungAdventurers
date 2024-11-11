@@ -422,3 +422,165 @@ exports.setGoal = (req, res) => {
     res.status(200).json({ message: 'Goal set successfully' });
   });
 };
+
+exports.checkStudentGoal = (req, res) => {
+  const { assignmentID, studentUsername } = req.params;
+
+  if (!assignmentID || !studentUsername) {
+    return res.status(400).json({ message: 'Assignment ID and Student Username are required.' });
+  }
+
+  const query = `
+    SELECT COUNT(*) AS goalExists
+    FROM goals
+    WHERE assignmentID = ? AND studentUsername = ?
+  `;
+
+  db.query(query, [assignmentID, studentUsername], (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ message: 'Database error', error: err });
+    }
+
+    const goalExists = results[0].goalExists > 0;
+    res.status(200).json({ goalExists });
+  });
+};
+
+exports.getStudentGoalsForSection = (req, res) => {
+  const { courseID, sectionID, semester, studentUsername } = req.params;
+
+  if (!courseID || !sectionID || !semester || !studentUsername) {
+    return res.status(400).json({ message: 'Course ID, Section ID, Semester, and Student Username are required.' });
+  }
+
+  const query = `
+    SELECT a.assignmentID, a.assignmentTitle, g.goalText
+    FROM assignments a
+    LEFT JOIN goals g ON a.assignmentID = g.assignmentID AND g.studentUsername = ?
+    WHERE a.courseID = ? AND a.sectionID = ? AND a.semester = ?
+  `;
+
+  db.query(query, [studentUsername, courseID, sectionID, semester], (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ message: 'Database error', error: err });
+    }
+
+    const goals = results.map(row => ({
+      assignmentID: row.assignmentID,
+      assignmentTitle: row.assignmentTitle,
+      goalText: row.goalText || null
+    }));
+
+    res.status(200).json({ goals });
+  });
+};
+
+exports.updateGoal = (req, res) => {
+  const { assignmentID, studentUsername, goalText } = req.body;
+
+  if (!assignmentID || !studentUsername || !goalText) {
+    return res.status(400).json({ message: 'Assignment ID, Student Username, and Goal Text are required.' });
+  }
+
+  const query = `
+    UPDATE goals 
+    SET goalText = ? 
+    WHERE assignmentID = ? AND studentUsername = ?
+  `;
+
+  db.query(query, [goalText, assignmentID, studentUsername], (err, result) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ message: 'Database error', error: err });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Goal not found for the given assignment and student.' });
+    }
+
+    res.status(200).json({ message: 'Goal updated successfully' });
+  });
+};
+
+exports.checkGroupMembership = (req, res) => {
+  const { studentUsername, courseID, sectionID, semester } = req.params;
+
+  if (!studentUsername || !courseID || !sectionID || !semester) {
+    return res.status(400).json({ message: 'Student Username, Course ID, Section ID, and Semester are required.' });
+  }
+
+  const query = `
+    SELECT groupID 
+    FROM enrollments 
+    WHERE studentUsername = ? AND courseID = ? AND sectionID = ? AND semester = ?
+  `;
+
+  db.query(query, [studentUsername, courseID, sectionID, semester], (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ message: 'Database error', error: err });
+    }
+
+    const isMember = results.length > 0 && results[0].groupID !== null;
+    res.status(200).json({ isMember });
+  });
+};
+
+exports.getAverageGoalRatings = (req, res) => {
+  const { studentUsername, courseID, sectionID, semester } = req.params;
+
+  if (!studentUsername || !courseID || !sectionID || !semester) {
+    return res.status(400).json({ message: 'Student Username, Course ID, Section ID, and Semester are required.' });
+  }
+
+  const query = `
+    SELECT 
+      a.assignmentID, 
+      ass.assignmentTitle, 
+      ans.studentAnswer,
+      g.goalText
+    FROM assignments a
+    JOIN questions q ON a.assignmentID = q.assignmentID
+    JOIN answers ans ON q.questionID = ans.questionID
+    JOIN student_submission sub ON ans.submissionID = sub.submissionID
+    JOIN assignments ass ON a.assignmentID = ass.assignmentID
+    LEFT JOIN goals g ON g.assignmentID = a.assignmentID AND g.studentUsername = ?
+    WHERE q.questionType = 'goal'
+      AND sub.evaluateeUsername = ?
+      AND a.courseID = ?
+      AND a.sectionID = ?
+      AND a.semester = ?
+  `;
+
+  db.query(query, [studentUsername, studentUsername, courseID, sectionID, semester], (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ message: 'Database error', error: err });
+    }
+
+    const averageRatings = results.reduce((acc, row) => {
+      const { assignmentID, assignmentTitle, studentAnswer, goalText } = row;
+
+      if (!acc[assignmentID]) {
+        acc[assignmentID] = { assignmentID, assignmentTitle, goalText, ratings: [] };
+      }
+      const rating = parseFloat(studentAnswer);
+      if (!isNaN(rating)) {
+        acc[assignmentID].ratings.push(rating);
+      }
+
+      return acc;
+    }, {});
+
+    const response = Object.values(averageRatings).map(({ assignmentID, assignmentTitle, goalText, ratings }) => ({
+      assignmentID,
+      assignmentTitle,
+      goalText: goalText || 'Goal not set',
+      averageRating: ratings.length > 0 ? (ratings.reduce((a, b) => a + b) / ratings.length).toFixed(2) : 'Not available',
+    }));
+
+    res.status(200).json({ ratings: response });
+  });
+};
