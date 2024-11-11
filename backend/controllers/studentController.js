@@ -160,7 +160,7 @@ exports.saveStudentAnswers = (req, res) => {
     });
   });
 
-  // Execute all answer queries and then update the timestamp for most recent submissions
+  // Execute all answer queries and then update the timestamp
   Promise.all([...queries, timestampPromise])
     .then(() => {
       res.status(200).json({ message: 'Answers saved successfully and timestamp updated' });

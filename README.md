@@ -62,6 +62,23 @@ git push origin <branch-name>
 * Navigate back to the "Conversation" tab and merge the pull request
 
 # Release Notes
+## v0.4.0
+### New Features
+* Implemented the front-end UI for the student user group page.
+* Implemented the front-end UI for the student user edit goal page.
+* Implemented and modified the front-end UI for the student-to-do-assignment page.
+* Implemented and modified the front-end UI for the teacher to set the goal evaluation question.
+* Implemented and modified RESTful APIs for creating, posting, and finishing assignments.
+* Implemented amd modified APIs to fetch all assignments for a specific student.
+* Implemented APIs to fetch all group members for a group.
+* Implemented APIs to create, edit and view the student goal.
+* Connect student group page and teacher edit group page to the backend database.
+### Bug Fixes
+* The issue of teacher user cannot delete the question which is already been added.
+* The issue of student can be added into several different groups at the same time.
+### Known Issues
+* If there is a space in the username during registration, it will result in successful registration but cannot login.
+* On the page where the teacher user creates an assignment, the split between the assignment list and the create button is not clear enough.
 ## v0.3.0
 ### New Features
 * Implemented the front-end UI for the student dashboard page.

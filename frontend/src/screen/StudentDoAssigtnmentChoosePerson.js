@@ -37,15 +37,7 @@ const GroupMemberList = () => {
   // 点击组员跳转至 StudentDoAssignment 页面
   const handleMemberClick = (member) => {
     setSubmissionID(member.submissionID); // 设置 submissionID
-    navigation.navigate('StudentDoAssignment', {
-      memberID: member.username,
-      onComplete: () => handleCompleteForMember(member.username),
-    });
-  };
-
-  // 更新完成的成员状态
-  const handleCompleteForMember = (username) => {
-    setCompletedMembers((prev) => ({ ...prev, [username]: true }));
+    navigation.navigate('StudentDoAssignment');
   };
 
   return (
