@@ -171,61 +171,90 @@ exports.saveStudentAnswers = (req, res) => {
     });
 };
 
-exports.submitStudentAnswers = (req, res) => {
+const validateDeadline = async (submissionID) => {
+  const query = `
+    SELECT a.dueDateTime
+    FROM student_submission sub
+    JOIN assignments a ON sub.assignmentID = a.assignmentID
+    WHERE sub.submissionID = ?;
+  `;
+
+  return new Promise((resolve, reject) => {
+    db.query(query, [submissionID], (err, results) => {
+      if (err) {
+        console.error('Database error while validating deadline:', err);
+        reject(new Error('Database error while validating deadline'));
+      } else if (results.length === 0) {
+        reject(new Error('Submission not found'));
+      } else {
+        const now = new Date();
+        const dueDateTime = new Date(results[0].dueDateTime);
+        resolve(now <= dueDateTime);
+      }
+    });
+  });
+};
+
+exports.submitStudentAnswers = async (req, res) => {
   const { submissionID, answers } = req.body;
 
   if (!submissionID || !answers) {
     return res.status(400).json({ message: 'Submission ID and Answers are required.' });
   }
 
-  const answerEntries = Object.entries(answers);
+  try {
+    // Step 1: Validate the deadline
+    const isWithinDeadline = await validateDeadline(submissionID);
+    if (!isWithinDeadline) {
+      return res.status(400).json({ message: 'The submission deadline has passed. You cannot submit this assignment.' });
+    }
 
-  // Prepare queries to insert or update each answer
-  const queries = answerEntries.map(([questionID, answer]) => {
-    const query = `
-      INSERT INTO answers (submissionID, questionID, studentAnswer)
-      VALUES (?, ?, ?)
-      ON DUPLICATE KEY UPDATE studentAnswer = VALUES(studentAnswer)
-    `;
+    // Step 2: Insert or update answers
+    const answerEntries = Object.entries(answers);
+    const queries = answerEntries.map(([questionID, answer]) => {
+      const query = `
+        INSERT INTO answers (submissionID, questionID, studentAnswer)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE studentAnswer = VALUES(studentAnswer)
+      `;
 
-    return new Promise((resolve, reject) => {
-      db.query(query, [submissionID, questionID, JSON.stringify(answer)], (err, result) => {
-        if (err) {
-          console.error('Database error:', err);
-          reject(err);
-        } else {
-          resolve(result);
-        }
-      });
-    });
-  });
-
-  // Update the submission status to 'submitted'
-  const updateSubmissionQuery = `
-    UPDATE student_submission
-    SET status = 'submitted', submitted_at = NOW()
-    WHERE submissionID = ?
-  `;
-
-  Promise.all(queries)
-    .then(() => {
       return new Promise((resolve, reject) => {
-        db.query(updateSubmissionQuery, [submissionID], (err, result) => {
+        db.query(query, [submissionID, questionID, JSON.stringify(answer)], (err, result) => {
           if (err) {
-            console.error('Database error during submission:', err);
+            console.error('Database error while saving answers:', err);
             reject(err);
           } else {
             resolve(result);
           }
         });
       });
-    })
-    .then(() => {
-      res.status(200).json({ message: 'Assignment submitted successfully' });
-    })
-    .catch((err) => {
-      res.status(500).json({ message: 'Database error during submission', error: err });
     });
+
+    await Promise.all(queries);
+
+    // Step 3: Update the submission status to 'submitted'
+    const updateSubmissionQuery = `
+      UPDATE student_submission
+      SET status = 'submitted', submitted_at = NOW()
+      WHERE submissionID = ?
+    `;
+
+    await new Promise((resolve, reject) => {
+      db.query(updateSubmissionQuery, [submissionID], (err, result) => {
+        if (err) {
+          console.error('Database error while updating submission status:', err);
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+
+    res.status(200).json({ message: 'Assignment submitted successfully' });
+  } catch (error) {
+    console.error('Error during assignment submission:', error);
+    res.status(500).json({ message: 'Error during submission', error: error.message });
+  }
 };
 
 exports.fetchAssignments = (req, res) => {
@@ -537,21 +566,15 @@ exports.getAverageGoalRatings = (req, res) => {
 
   const query = `
     SELECT 
-      a.assignmentID, 
-      ass.assignmentTitle, 
-      ans.studentAnswer,
-      g.goalText
+      a.assignmentID,
+      a.assignmentTitle,
+      g.goalText,
+      s.score,
+      s.published
     FROM assignments a
-    JOIN questions q ON a.assignmentID = q.assignmentID
-    JOIN answers ans ON q.questionID = ans.questionID
-    JOIN student_submission sub ON ans.submissionID = sub.submissionID
-    JOIN assignments ass ON a.assignmentID = ass.assignmentID
     LEFT JOIN goals g ON g.assignmentID = a.assignmentID AND g.studentUsername = ?
-    WHERE q.questionType = 'goal'
-      AND sub.evaluateeUsername = ?
-      AND a.courseID = ?
-      AND a.sectionID = ?
-      AND a.semester = ?
+    LEFT JOIN scores s ON s.assignmentID = a.assignmentID AND s.studentUsername = ?
+    WHERE a.courseID = ? AND a.sectionID = ? AND a.semester = ?
   `;
 
   db.query(query, [studentUsername, studentUsername, courseID, sectionID, semester], (err, results) => {
@@ -560,25 +583,11 @@ exports.getAverageGoalRatings = (req, res) => {
       return res.status(500).json({ message: 'Database error', error: err });
     }
 
-    const averageRatings = results.reduce((acc, row) => {
-      const { assignmentID, assignmentTitle, studentAnswer, goalText } = row;
-
-      if (!acc[assignmentID]) {
-        acc[assignmentID] = { assignmentID, assignmentTitle, goalText, ratings: [] };
-      }
-      const rating = parseFloat(studentAnswer);
-      if (!isNaN(rating)) {
-        acc[assignmentID].ratings.push(rating);
-      }
-
-      return acc;
-    }, {});
-
-    const response = Object.values(averageRatings).map(({ assignmentID, assignmentTitle, goalText, ratings }) => ({
-      assignmentID,
-      assignmentTitle,
-      goalText: goalText || 'Goal not set',
-      averageRating: ratings.length > 0 ? (ratings.reduce((a, b) => a + b) / ratings.length).toFixed(2) : 'Not available',
+    const response = results.map((row) => ({
+      assignmentID: row.assignmentID,
+      assignmentTitle: row.assignmentTitle,
+      goalText: row.goalText || 'Goal not set',
+      averageRating: row.published ? parseFloat(row.score).toFixed(2) : 'Not available',
     }));
 
     res.status(200).json({ ratings: response });

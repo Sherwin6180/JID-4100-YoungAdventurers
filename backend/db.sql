@@ -144,7 +144,7 @@ CREATE TABLE goals (
   UNIQUE (studentUsername, assignmentID),
   INDEX (assignmentID, studentUsername),  -- Added index for foreign key reference
   FOREIGN KEY (studentUsername) REFERENCES users (username) ON DELETE CASCADE,
-  FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID)
+  FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID) ON DELETE CASCADE
 ) ENGINE = InnoDB;
 
 DROP TABLE IF EXISTS questions;
@@ -188,4 +188,17 @@ CREATE TABLE answers (
   UNIQUE KEY unique_answer (submissionID, questionID),
   FOREIGN KEY (submissionID) REFERENCES student_submission (submissionID) ON DELETE CASCADE,
   FOREIGN KEY (questionID) REFERENCES questions (questionID) ON DELETE CASCADE
+) ENGINE = InnoDB;
+
+DROP TABLE IF EXISTS scores;
+
+CREATE TABLE scores (
+  scoreID INT AUTO_INCREMENT PRIMARY KEY,
+  assignmentID INT NOT NULL,
+  studentUsername VARCHAR(255) NOT NULL,
+  score DECIMAL(5, 2) DEFAULT NULL,
+  published BOOLEAN DEFAULT FALSE,
+  finalizedAt TIMESTAMP NULL,
+  FOREIGN KEY (assignmentID) REFERENCES assignments (assignmentID) ON DELETE CASCADE,
+  FOREIGN KEY (studentUsername) REFERENCES users (username) ON DELETE CASCADE
 ) ENGINE = InnoDB;

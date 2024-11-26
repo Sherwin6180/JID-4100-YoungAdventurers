@@ -178,3 +178,100 @@ exports.getCoursesByTeacher = (req, res) => {
     }
   );
 };
+
+exports.getGrades = (req, res) => {
+  const { assignmentID } = req.params;
+
+  const query = `
+    SELECT 
+      s.studentUsername,
+      CONCAT(u.firstName, ' ', u.lastName) AS studentName,
+      s.score,
+      s.published,
+      g.goalText
+    FROM scores s
+    JOIN users u ON s.studentUsername = u.username
+    LEFT JOIN goals g ON s.assignmentID = g.assignmentID AND s.studentUsername = g.studentUsername
+    WHERE s.assignmentID = ?
+  `;
+
+  db.query(query, [assignmentID], (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ message: 'Database error', error: err });
+    }
+
+    const response = results.map((row) => ({
+      studentUsername: row.studentUsername,
+      studentName: row.studentName,
+      score: row.published && row.score !== null ? parseFloat(row.score).toFixed(2) : 'Not available',
+      goal: row.goalText || 'No goal set',
+    }));
+
+    res.status(200).json({ ratings: response });
+  });
+};
+
+exports.publishGrades = async (req, res) => {
+  const { assignmentID } = req.body;
+  console.log(req.body);
+
+  const query = `
+    INSERT INTO scores (assignmentID, studentUsername, score, published, finalizedAt)
+    SELECT 
+      sub.assignmentID,
+      sub.evaluateeUsername AS studentUsername,
+      AVG(ans.studentAnswer) AS score,
+      TRUE AS published,
+      NOW() AS finalizedAt
+    FROM student_submission sub
+    JOIN answers ans ON sub.submissionID = ans.submissionID
+    JOIN questions q ON ans.questionID = q.questionID
+    WHERE q.questionType = 'goal'
+      AND sub.assignmentID = ?
+      AND sub.status = 'submitted'
+    GROUP BY sub.evaluateeUsername
+    ON DUPLICATE KEY UPDATE 
+      score = VALUES(score),
+      published = TRUE,
+      finalizedAt = NOW();
+  `;
+
+
+  db.query(query, [assignmentID], (err) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ message: 'Database error', error: err });
+    }
+    res.status(200).json({ message: 'Scores published successfully' });
+  });
+};
+
+exports.checkGradesPublished = (req, res) => {
+  const { assignmentID } = req.params;
+
+  if (!assignmentID) {
+    return res.status(400).json({ message: 'Assignment ID is required.' });
+  }
+
+  const query = `
+    SELECT published
+    FROM scores
+    WHERE assignmentID = ?
+    LIMIT 1
+  `;
+
+  db.query(query, [assignmentID], (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ message: 'Database error', error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(200).json({ gradesPublished: false });
+    }
+
+    const gradesPublished = results[0].published === 1;
+    return res.status(200).json({ gradesPublished });
+  });
+};

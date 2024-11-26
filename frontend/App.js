@@ -21,6 +21,7 @@ import StudentGroupsScreen from './src/screen/StudentGroups';
 import StudentDoAssignmentChoosePersonScreen from './src/screen/StudentDoAssigtnmentChoosePerson';
 import StudentSetGoal from './src/screen/StudentSetGoal';
 import StudentEvaluationResults from './src/screen/StudentEvaluationResults';
+import TeacherCheckGrades from './src/screen/TeacherCheckGrades';
 import { UserContext, UserProvider } from './UserContext';
 
 const Stack = createNativeStackNavigator();
@@ -157,6 +158,12 @@ const App = () => {
           <Stack.Screen 
             name="StudentEvaluationResults" 
             component={StudentEvaluationResults} 
+          /> 
+
+          {/* Teacher Check Grades Screen*/}
+          <Stack.Screen 
+            name="TeacherCheckGrades" 
+            component={TeacherCheckGrades} 
           /> 
         </Stack.Navigator>
       </UserProvider>

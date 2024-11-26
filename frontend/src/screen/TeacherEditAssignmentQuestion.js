@@ -17,11 +17,33 @@ const EditAssignmentQuestion = () => {
   const [isPublished, setIsPublished] = useState(false);
   const [ratingRange, setRatingRange] = useState([1, 5]);
   const [includeEvaluateGoal, setIncludeEvaluateGoal] = useState(false);
+  const [gradesPublished, setGradesPublished] = useState(false);
   const { assignmentID } = useContext(UserContext);
 
   useEffect(() => {
     fetchAssignmentData();
+    checkGradesPublished();
   }, []);
+
+  const handleNavigateToGrades = () => {
+    navigation.navigate('TeacherCheckGrades', { assignmentID });
+  };
+
+  const checkGradesPublished = async () => {
+    try {
+      const response = await fetch(`${server}/api/teacher/checkGradesPublished/${assignmentID}`);
+      const data = await response.json();
+  
+      if (response.ok) {
+        setGradesPublished(data.gradesPublished);
+      } else {
+        Alert.alert('Error', data.message || 'Failed to check grades publication status.');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'An error occurred while checking grades publication status.');
+    }
+  };
 
   // Fetch questions and current evaluateGoals value
   const fetchAssignmentData = async () => {
@@ -301,6 +323,21 @@ const EditAssignmentQuestion = () => {
         {!isPublished && (
           <TouchableOpacity style={styles.publishButton} onPress={handlePublishAssignment}>
             <Text style={styles.publishButtonText}>Publish Assignment</Text>
+          </TouchableOpacity>
+        )}
+
+        {!gradesPublished && isPublished && (
+          <TouchableOpacity
+            style={styles.publishButton}
+            onPress={() => navigation.navigate('PublishGrades', { assignmentID })}
+          >
+            <Text style={styles.publishButtonText}>Publish Grades</Text>
+          </TouchableOpacity>
+        )}
+
+        {gradesPublished && (
+          <TouchableOpacity style={styles.checkButton} onPress={handleNavigateToGrades}>
+            <Text style={styles.checkButtonText}>Check Grades</Text>
           </TouchableOpacity>
         )}
 
