@@ -87,7 +87,7 @@ const StudentEvaluationResults = () => {
                 <Text style={styles.assignmentTitle}>{item.assignmentTitle}</Text>
                 <Text style={styles.goalText}>Goal: {item.goalText}</Text>
                 <Text style={styles.averageRating}>
-                  Average Rating: {item.averageRating} / 5
+                  Average Rating: {item.averageRating}
                 </Text>
               </View>
             ))
