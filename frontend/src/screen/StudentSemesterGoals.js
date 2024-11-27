@@ -92,7 +92,7 @@ const StudentSemesterGoals = () => {
             {/* Settings icon */}
             <TouchableOpacity
               style={styles.iconButton}
-              onPress={() => navigation.navigate('Settings')}
+              onPress={() => navigation.navigate('setting')}
             >
               <MaterialIcons name="settings" size={30} color="black" />
             </TouchableOpacity>

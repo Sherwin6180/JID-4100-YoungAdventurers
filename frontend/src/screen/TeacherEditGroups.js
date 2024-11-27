@@ -20,7 +20,6 @@ const TeacherGroupsEdit = () => {
     fetchGroups();
   }, []);
 
-  // 从后端获取组列表
   const fetchGroups = async () => {
     try {
       const response = await fetch(`${server}/api/group/fetchGroups/${courseID}/${sectionID}/${semester}`);
@@ -38,7 +37,6 @@ const TeacherGroupsEdit = () => {
     }
   };
 
-  // 添加新组
   const addGroup = async () => {
     if (newGroupName.trim() === '') {
       Alert.alert('Error', 'Please provide a valid group name.');
@@ -75,13 +73,11 @@ const TeacherGroupsEdit = () => {
     }
   };
 
-  // 查看组内学生详情
   const viewGroupDetails = (group) => {
     setSelectedGroup(group);
     setModalVisible(true);
   };
 
-  // 从组中移除学生
   const removeStudent = (studentUsername) => {
     if (selectedGroup) {
       const updatedGroup = {
@@ -108,6 +104,13 @@ const TeacherGroupsEdit = () => {
             >
               <MaterialIcons name="dashboard" size={30} color="black" />
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.iconButton, { marginTop: 30 }]} 
+              onPress={() => navigation.navigate('setting')}
+            >
+              <MaterialIcons name="settings" size={30} color="black" />
+            </TouchableOpacity>
           </View>
 
           <View style={styles.bottomIcons}>
@@ -120,7 +123,6 @@ const TeacherGroupsEdit = () => {
         <ScrollView contentContainerStyle={styles.container}>
           <Text style={styles.title}>Edit Groups</Text>
 
-          {/* 显示当前 section 下的所有组 */}
           <Text style={styles.subTitle}>Current Groups:</Text>
           {groups.length === 0 ? (
             <Text style={styles.noGroupsText}>No groups created for this section.</Text>
@@ -152,15 +154,12 @@ const TeacherGroupsEdit = () => {
         </ScrollView>
       </View>
 
-      {/* 组员详情模态框 */}
       <Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <SafeAreaView style={styles.modalContainer}>
           {selectedGroup && (
             <>
               <Text style={styles.modalTitle}>{selectedGroup.groupName}</Text>
               <Text style={styles.modalSubtitle}>Members:</Text>
-              
-              {/* 组员列表 */}
               {selectedGroup.students.length > 0 ? (
                 <FlatList
                   data={selectedGroup.students}
@@ -180,7 +179,6 @@ const TeacherGroupsEdit = () => {
             </>
           )}
 
-          {/* 关闭模态框按钮 */}
           <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
             <Text style={styles.closeButtonText}>Close</Text>
           </TouchableOpacity>
@@ -211,6 +209,7 @@ const styles = StyleSheet.create({
   },
   bottomIcons: {
     marginTop: 'auto',
+    marginBottom: 60,
   },
   container: {
     flexGrow: 1,

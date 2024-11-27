@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { StatusBar } from 'react-native'; // 引入 StatusBar
 import LoginScreen from './src/screen/Login'; // login screen
 import CreateAccountScreen from './src/screen/CreateAccount'; // Create Account Screen
 import ResetPasswordScreen from './src/screen/ResetPassword'; // Retrieve password screen
@@ -22,6 +23,8 @@ import StudentDoAssignmentChoosePersonScreen from './src/screen/StudentDoAssigtn
 import StudentSetGoal from './src/screen/StudentSetGoal';
 import StudentEvaluationResults from './src/screen/StudentEvaluationResults';
 import TeacherCheckGrades from './src/screen/TeacherCheckGrades';
+import setting from './src/screen/setting';
+import AddAssignmentPage from './src/screen/TeacherAddAssignment';
 import { UserContext, UserProvider } from './UserContext';
 
 const Stack = createNativeStackNavigator();
@@ -30,8 +33,9 @@ const App = () => {
   return (
     <NavigationContainer>
       <UserProvider>
-
-        {/* Initial screen: Login */}
+        {/* 设置全屏模式 */}
+        <StatusBar hidden={true} />
+        
         <Stack.Navigator 
           initialRouteName="Login"
           screenOptions={{
@@ -165,6 +169,18 @@ const App = () => {
             name="TeacherCheckGrades" 
             component={TeacherCheckGrades} 
           /> 
+
+          {/* Setting Screen*/}
+          <Stack.Screen
+            name="setting"
+            component={setting}
+          />
+
+          {/* add assignment Screen*/}
+          <Stack.Screen
+            name="AddAssignmentPage"
+            component={AddAssignmentPage}
+          />
         </Stack.Navigator>
       </UserProvider>
     </NavigationContainer>
