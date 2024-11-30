@@ -137,7 +137,7 @@ CREATE TABLE assignments (
 DROP TABLE IF EXISTS goals;
 
 CREATE TABLE goals (
-  goalID INT AUTO_INCREMENT PRIMARY KEY,
+  goalID INT AUTO_INCREMENT PRIMARY KEY,-- Make goalID the primary key
   studentUsername VARCHAR(255) NOT NULL,
   assignmentID INT NOT NULL,
   goalText TEXT NOT NULL,
