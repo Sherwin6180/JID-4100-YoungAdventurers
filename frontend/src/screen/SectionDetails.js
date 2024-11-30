@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons'; 
+import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { UserContext } from '../../UserContext';
 import config from '../../config';
@@ -9,16 +9,14 @@ const server = config.apiUrl;
 
 const SectionDetail = () => {
   const navigation = useNavigation();
-  const { courseID, semester, sectionID } = useContext(UserContext);  // 从 UserContext 获取 courseID, semester, sectionID
+  const { courseID, semester, sectionID } = useContext(UserContext);
   const [courseDescription, setCourseDescription] = useState('');
   const [sectionDescription, setSectionDescription] = useState('');
 
-  // 使用 useEffect 在组件加载时获取课程和章节描述
   useEffect(() => {
     fetchSectionDetails();
   }, []);
 
-  // 通过 API 获取课程和章节描述
   const fetchSectionDetails = async () => {
     try {
       const response = await fetch(`${server}/api/class/getSectionDetails/${courseID}/${semester}/${sectionID}`);
@@ -37,30 +35,39 @@ const SectionDetail = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>  
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* 左侧任务栏 */}
+        {/* 左侧侧边栏 */}
         <View style={styles.sidebar}>
-          <View style={styles.iconContainer}>
-            {/* 图标 1: 返回到课程章节 */}
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => navigation.goBack()}
-            >
-              <MaterialIcons name="arrow-back" size={30} color="black" />
-            </TouchableOpacity>
-
-            {/* 图标 2: 返回到教师仪表板 */}
+          {/* 顶部图标 */}
+          <View style={styles.topIcons}>
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => navigation.navigate('TeacherDashboard')}
             >
               <MaterialIcons name="dashboard" size={30} color="black" />
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => navigation.navigate('setting')}
+            >
+              <MaterialIcons name="settings" size={30} color="black" />
+            </TouchableOpacity>
+          </View>
+
+          {/* 底部图标 */}
+          <View style={styles.bottomIcons}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => navigation.goBack()}
+            >
+              <MaterialIcons name="arrow-back" size={30} color="black" />
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* 章节详情内容 */}
+        {/* 主要内容 */}
         <View style={styles.content}>
           <Text style={styles.title}>Course ID: {courseID}</Text>
           <Text style={styles.subtitle}>Section ID: {sectionID}</Text>
@@ -72,7 +79,6 @@ const SectionDetail = () => {
           <Text style={styles.sectionHeader}>Section Description</Text>
           <Text style={styles.description}>{sectionDescription}</Text>
 
-          {/* 添加导航到 TeacherRosterEdit 页面 */}
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => navigation.navigate('TeacherRoster')}
@@ -80,7 +86,6 @@ const SectionDetail = () => {
             <Text style={styles.addButtonText}>Student Roster</Text>
           </TouchableOpacity>
 
-          {/* 新增的 Groups 按钮 */}
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => navigation.navigate('TeacherEditGroups')}
@@ -88,7 +93,6 @@ const SectionDetail = () => {
             <Text style={styles.addButtonText}>Groups</Text>
           </TouchableOpacity>
 
-          {/* 新添加的 Assignment 按钮 */}
           <TouchableOpacity
             style={styles.addButton}
             onPress={() => navigation.navigate('TeacherAssignment')}
@@ -114,14 +118,16 @@ const styles = StyleSheet.create({
   sidebar: {
     width: 60,
     backgroundColor: '#B3A369',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 10,
   },
-  iconContainer: {
-    flexDirection: 'column',
-    justifyContent: 'flex-start',
+  topIcons: {
     alignItems: 'center',
+  },
+  bottomIcons: {
+    alignItems: 'center',
+    marginBottom: 45, // 返回键距离底部一个图标高度
   },
   iconButton: {
     paddingVertical: 15,

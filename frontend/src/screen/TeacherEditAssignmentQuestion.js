@@ -339,7 +339,7 @@ const EditAssignmentQuestion = () => {
         )}
 
         {/* 保存作业按钮 */}
-        <TouchableOpacity style={styles.saveButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.saveButton} onPress={() => navigation.navigate('TeacherAssignment')}>
           <Text style={styles.saveButtonText}>Return</Text>
         </TouchableOpacity>
 

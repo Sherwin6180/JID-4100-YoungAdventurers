@@ -86,7 +86,7 @@ const StudentDashboard = () => {
             </TouchableOpacity>
 
             {/* Settings icon */}
-            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('Settings')}>
+            <TouchableOpacity style={styles.iconButton} onPress={() => navigation.navigate('setting')}>
               <MaterialIcons name="settings" size={30} color="black" />
             </TouchableOpacity>
           </View>
