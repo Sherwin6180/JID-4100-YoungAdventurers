@@ -275,3 +275,97 @@ exports.checkGradesPublished = (req, res) => {
     return res.status(200).json({ gradesPublished });
   });
 };
+
+exports.setAllowGroupChange = (req, res) => {
+  const { courseID, sectionID, semester, allowGroupChange } = req.body;
+
+  if (!courseID || !sectionID || !semester || typeof allowGroupChange !== 'boolean') {
+    return res.status(400).json({ message: 'Course ID, Section ID, Semester, and Allow Group Change are required.' });
+  }
+
+  const query = `
+    UPDATE sections
+    SET allowGroupChange = ?
+    WHERE courseID = ? AND sectionID = ? AND semester = ?
+  `;
+
+  db.query(query, [allowGroupChange, courseID, sectionID, semester], (err, result) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ message: 'Database error', error: err });
+    }
+
+    if (result.affectedRows > 0) {
+      res.status(200).json({ message: 'Allow Group Change setting updated successfully.' });
+    } else {
+      res.status(404).json({ message: 'Section not found.' });
+    }
+  });
+};
+
+exports.getAllowGroupChangeStatus = (req, res) => {
+  const { courseID, sectionID, semester } = req.params;
+
+  if (!courseID || !sectionID || !semester) {
+    return res.status(400).json({ message: 'Course ID, Section ID, and Semester are required.' });
+  }
+
+  const query = `
+    SELECT allowGroupChange
+    FROM sections
+    WHERE courseID = ? AND sectionID = ? AND semester = ?
+  `;
+
+  db.query(query, [courseID, sectionID, semester], (err, results) => {
+    if (err) {
+      console.error('Database error:', err);
+      return res.status(500).json({ message: 'Database error', error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Section not found.' });
+    }
+
+    res.status(200).json({ allowGroupChange: results[0].allowGroupChange });
+  });
+};
+
+exports.removeStudentFromGroup = (req, res) => {
+  const { studentUsername, courseID, sectionID, semester } = req.body;
+
+  if (!studentUsername || !courseID || !sectionID || !semester) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  const checkEnrollmentQuery = `
+    SELECT groupID
+    FROM enrollments
+    WHERE studentUsername = ? AND courseID = ? AND sectionID = ? AND semester = ?
+  `;
+
+  db.query(checkEnrollmentQuery, [studentUsername, courseID, sectionID, semester], (err, results) => {
+    if (err) {
+      console.error('Error checking student enrollment:', err);
+      return res.status(500).json({ message: 'Error checking student enrollment', error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Student not found in the specified course, section, or semester.' });
+    }
+
+    const updateGroupQuery = `
+      UPDATE enrollments
+      SET groupID = NULL
+      WHERE studentUsername = ? AND courseID = ? AND sectionID = ? AND semester = ?
+    `;
+
+    db.query(updateGroupQuery, [studentUsername, courseID, sectionID, semester], (err, result) => {
+      if (err) {
+        console.error('Error removing student from group:', err);
+        return res.status(500).json({ message: 'Error removing student from group', error: err });
+      }
+
+      res.status(200).json({ message: 'Student successfully removed from group.' });
+    });
+  });
+};
