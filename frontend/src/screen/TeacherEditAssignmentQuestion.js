@@ -17,11 +17,56 @@ const EditAssignmentQuestion = () => {
   const [isPublished, setIsPublished] = useState(false);
   const [ratingRange, setRatingRange] = useState([1, 5]);
   const [includeEvaluateGoal, setIncludeEvaluateGoal] = useState(false);
+  const [gradesPublished, setGradesPublished] = useState(false);
   const { assignmentID } = useContext(UserContext);
 
   useEffect(() => {
     fetchAssignmentData();
+    checkGradesPublished();
   }, []);
+
+  const handleNavigateToGrades = () => {
+    navigation.navigate('TeacherCheckGrades', { assignmentID });
+  };
+
+  const handlePublishGrades = async () => {
+    try {
+      const response = await fetch(`${server}/api/teacher/publishGrades`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ assignmentID }),
+      });
+  
+      if (response.ok) {
+        setGradesPublished(true); // Mark grades as published
+        Alert.alert('Success', 'Grades published successfully!');
+      } else {
+        const data = await response.json();
+        throw new Error(data.message || 'Failed to publish grades');
+      }
+    } catch (error) {
+      console.error('Error publishing grades:', error);
+      Alert.alert('Error', 'An error occurred while publishing grades.');
+    }
+  };  
+
+  const checkGradesPublished = async () => {
+    try {
+      const response = await fetch(`${server}/api/teacher/checkGradesPublished/${assignmentID}`);
+      const data = await response.json();
+  
+      if (response.ok) {
+        setGradesPublished(data.gradesPublished);
+      } else {
+        Alert.alert('Error', data.message || 'Failed to check grades publication status.');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'An error occurred while checking grades publication status.');
+    }
+  };
 
   // Fetch questions and current evaluateGoals value
   const fetchAssignmentData = async () => {
@@ -294,13 +339,28 @@ const EditAssignmentQuestion = () => {
         )}
 
         {/* 保存作业按钮 */}
-        <TouchableOpacity style={styles.saveButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.saveButton} onPress={() => navigation.navigate('TeacherAssignment')}>
           <Text style={styles.saveButtonText}>Return</Text>
         </TouchableOpacity>
 
         {!isPublished && (
           <TouchableOpacity style={styles.publishButton} onPress={handlePublishAssignment}>
             <Text style={styles.publishButtonText}>Publish Assignment</Text>
+          </TouchableOpacity>
+        )}
+
+        {!gradesPublished && isPublished && (
+          <TouchableOpacity
+            style={styles.publishButton}
+            onPress={handlePublishGrades}
+          >
+            <Text style={styles.publishButtonText}>Publish Grades</Text>
+          </TouchableOpacity>
+        )}
+
+        {gradesPublished && (
+          <TouchableOpacity style={styles.checkButton} onPress={handleNavigateToGrades}>
+            <Text style={styles.checkButtonText}>Check Grades</Text>
           </TouchableOpacity>
         )}
 
@@ -402,6 +462,18 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   publishButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  checkButton: {
+    padding: 15,
+    backgroundColor: '#4CAF50',
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  checkButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
