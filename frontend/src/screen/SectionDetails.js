@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet, Alert, Switch } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { UserContext } from '../../UserContext';
@@ -12,9 +12,11 @@ const SectionDetail = () => {
   const { courseID, semester, sectionID } = useContext(UserContext);
   const [courseDescription, setCourseDescription] = useState('');
   const [sectionDescription, setSectionDescription] = useState('');
+  const [allowGroupChange, setAllowGroupChange] = useState(false);
 
   useEffect(() => {
     fetchSectionDetails();
+    fetchAllowGroupChangeStatus();
   }, []);
 
   const fetchSectionDetails = async () => {
@@ -31,6 +33,52 @@ const SectionDetail = () => {
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'An error occurred while fetching section details.');
+    }
+  };
+
+  const fetchAllowGroupChangeStatus = async () => {
+    try {
+      const response = await fetch(`${server}/api/teacher/getAllowGroupChangeStatus/${courseID}/${sectionID}/${semester}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setAllowGroupChange(data.allowGroupChange);
+      } else {
+        Alert.alert('Error', data.message || 'Failed to fetch group change status');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'An error occurred while fetching group change status.');
+    }
+  };
+
+  const toggleAllowGroupChange = async () => {
+    const newValue = !allowGroupChange;
+    setAllowGroupChange(newValue);
+
+    try {
+      const response = await fetch(`${server}/api/teacher/setAllowGroupChange`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseID,
+          sectionID,
+          semester,
+          allowGroupChange: newValue,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        Alert.alert('Error', errorData.message || 'Failed to update group change setting.');
+        setAllowGroupChange(!newValue); // 如果失败，恢复原状态
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'An error occurred while updating the group change setting.');
+      setAllowGroupChange(!newValue); // 如果失败，恢复原状态
     }
   };
 
@@ -78,6 +126,15 @@ const SectionDetail = () => {
 
           <Text style={styles.sectionHeader}>Section Description</Text>
           <Text style={styles.description}>{sectionDescription}</Text>
+
+          {/* 将小组更改开关加入到页面中 */}
+          <View style={styles.toggleContainer}>
+            <Text style={styles.toggleLabel}>Allow Group Change:</Text>
+            <Switch
+              value={allowGroupChange == 1 ? true : false}
+              onValueChange={toggleAllowGroupChange}
+            />
+          </View>
 
           <TouchableOpacity
             style={styles.addButton}
@@ -167,6 +224,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  toggleLabel: {
+    fontSize: 16,
+    marginRight: 10,
   },
 });
 

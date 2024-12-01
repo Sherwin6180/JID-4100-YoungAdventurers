@@ -66,6 +66,11 @@ const MyGroup = () => {
         }),
       });
   
+      if (response.status === 403) {
+        Alert.alert('Error', 'Group change is not allowed for this section.');
+        return;
+      }
+  
       if (!response.ok) {
         throw new Error('Failed to join the group');
       }

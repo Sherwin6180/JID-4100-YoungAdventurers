@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { SafeAreaView, StatusBar, View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { UserContext } from '../../UserContext';
 import config from '../../config';
@@ -17,6 +17,12 @@ const TeacherAssignment = () => {
   useEffect(() => {
     fetchAssignments();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchAssignments();
+    }, [])
+  );
 
   const fetchAssignments = async () => {
     try {

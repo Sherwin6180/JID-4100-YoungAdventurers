@@ -78,18 +78,45 @@ const TeacherGroupsEdit = () => {
     setModalVisible(true);
   };
 
-  const removeStudent = (studentUsername) => {
+  const removeStudent = async (studentUsername) => {
     if (selectedGroup) {
-      const updatedGroup = {
-        ...selectedGroup,
-        students: selectedGroup.students.filter((student) => student.username !== studentUsername),
-      };
-
-      setGroups(groups.map((group) => (group.id === updatedGroup.id ? updatedGroup : group)));
-      setSelectedGroup(updatedGroup);
-      Alert.alert('Success', 'Student removed from group successfully!');
+      try {
+        // Send a request to the backend API to remove the student from the group
+        const response = await fetch(`${server}/api/teacher/removeStudentFromGroup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            studentUsername,
+            courseID,
+            sectionID,
+            semester,
+          }),
+        });
+  
+        const data = await response.json();
+  
+        if (response.ok) {
+          Alert.alert('Success', 'Student removed from group successfully!');
+          // Update the group state to reflect the changes
+          const updatedGroup = {
+            ...selectedGroup,
+            students: selectedGroup.students.filter((student) => student.username !== studentUsername),
+          };
+  
+          setGroups(groups.map((group) => (group.groupID === updatedGroup.groupID ? updatedGroup : group)));
+          setSelectedGroup(updatedGroup);
+        } else {
+          console.error('Error removing student:', data.message);
+          Alert.alert('Error', data.message || 'Failed to remove student from the group.');
+        }
+      } catch (error) {
+        console.error('Error removing student:', error);
+        Alert.alert('Error', 'An error occurred while removing the student from the group.');
+      }
     }
-  };
+  };  
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -282,10 +309,23 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 20,
   },
+  modalContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+    paddingHorizontal: 30,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    paddingHorizontal: 20,
+  },
   modalSubtitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
+    paddingHorizontal: 20,
   },
   studentRow: {
     flexDirection: 'row',
@@ -293,6 +333,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
+    paddingHorizontal: 20,
   },
   studentName: {
     fontSize: 18,
@@ -305,6 +346,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     fontStyle: 'italic',
+    paddingHorizontal: 30
   },
   closeButton: {
     padding: 15,
@@ -312,6 +354,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     alignItems: 'center',
     marginTop: 20,
+    marginHorizontal: 20,
   },
   closeButtonText: {
     color: '#fff',
