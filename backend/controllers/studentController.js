@@ -357,6 +357,7 @@ exports.joinGroup = (req, res) => {
 
     const allowGroupChange = results[0].allowGroupChange;
 
+    // Ensure that teacher allows students to change group
     if (!allowGroupChange) {
       return res.status(403).json({ message: 'Group change is not allowed for this section.' });
     }
@@ -586,6 +587,7 @@ exports.getAverageGoalRatings = (req, res) => {
     return res.status(400).json({ message: 'Student Username, Course ID, Section ID, and Semester are required.' });
   }
 
+  // Ensure that assignments are published
   const query = `
     SELECT 
       a.assignmentID,
