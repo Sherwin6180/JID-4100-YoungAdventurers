@@ -51,6 +51,7 @@ CREATE TABLE sections (
                 'Spring 2028', 'Summer 2028', 'Fall 2028',
                 'Spring 2029', 'Summer 2029', 'Fall 2029',
                 'Spring 2030', 'Summer 2030', 'Fall 2030') NOT NULL,
+  allowGroupChange BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (courseID, sectionID, semester),
   FOREIGN KEY (courseID, semester) REFERENCES courses (courseID, semester)
