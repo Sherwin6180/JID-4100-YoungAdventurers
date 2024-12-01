@@ -21,14 +21,18 @@ const AddAssignmentPage = () => {
   const { courseID, semester, sectionID, setAssignmentID } = useContext(UserContext);
 
   const [newAssignmentName, setNewAssignmentName] = useState('');
-  const [dueDateTime, setDueDateTime] = useState(new Date());
+
+  // 设置默认的日期时间为当天的 23:59:59
+  const currentDate = new Date();
+  currentDate.setHours(23, 59, 59, 999); // 设置小时、分钟、秒和毫秒为 23:59:59.999
+  const [dueDateTime, setDueDateTime] = useState(currentDate);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
   const showDatePicker = () => setDatePickerVisibility(true);
   const hideDatePicker = () => setDatePickerVisibility(false);
 
   const handleConfirm = (date) => {
-    date.setSeconds(59); // 设置秒数为 59，保持一致性
+    date.setHours(23, 59, 59, 999); // 设置选择的日期时间为 23:59:59.999
     setDueDateTime(date);
     hideDatePicker();
   };
@@ -119,7 +123,7 @@ const AddAssignmentPage = () => {
           <DateTimePickerModal
             isVisible={isDatePickerVisible}
             mode="datetime"
-            date={dueDateTime}
+            date={dueDateTime} // 设置默认时间为 23:59:59
             onConfirm={handleConfirm}
             onCancel={hideDatePicker}
           />

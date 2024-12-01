@@ -1,7 +1,7 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import { SafeAreaView, ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { UserContext } from '../../UserContext';
 import config from '../../config';
 
@@ -16,6 +16,12 @@ const GroupMemberList = () => {
   useEffect(() => {
     fetchGroupMembers(); // 组件加载时调用API获取组员数据
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchGroupMembers(); // 当页面重新获得焦点时调用API获取组员数据
+    }, [])
+  );
 
   // 从API获取组员数据
   const fetchGroupMembers = async () => {

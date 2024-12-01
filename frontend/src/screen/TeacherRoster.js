@@ -134,7 +134,10 @@ const TeacherRosterEdit = () => {
           {students.map((student) =>
             student && student.firstName && student.lastName ? (
               <View key={student.username} style={styles.studentCard}>
-                <Text style={styles.studentName}>{student.firstName} {student.lastName}</Text>
+                <View>
+                  <Text style={styles.studentName}>{student.firstName} {student.lastName}</Text>
+                  <Text style={styles.studentUsername}>{student.username}</Text>
+                </View>
                 <TouchableOpacity
                   style={styles.removeButton}
                   onPress={() => removeStudent(student.username)}
@@ -237,6 +240,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  studentUsername: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: '#666', // Grey color for better contrast with other text
   },
 });
 

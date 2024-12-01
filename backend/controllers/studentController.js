@@ -339,49 +339,71 @@ exports.joinGroup = (req, res) => {
   if (!studentUsername || !groupID || !courseID || !sectionID || !semester) {
     return res.status(400).json({ message: 'All fields are required.' });
   }
-
-  const checkQuery = `
-    SELECT groupID 
-    FROM enrollments 
-    WHERE studentUsername = ? AND courseID = ? AND sectionID = ? AND semester = ?
+  const allowGroupChangeQuery = `
+    SELECT allowGroupChange
+    FROM sections
+    WHERE courseID = ? AND sectionID = ? AND semester = ?
   `;
 
-  db.query(checkQuery, [studentUsername, courseID, sectionID, semester], (err, results) => {
+  db.query(allowGroupChangeQuery, [courseID, sectionID, semester], (err, results) => {
     if (err) {
-      console.error('Error checking student enrollment:', err);
-      return res.status(500).json({ message: 'Error checking enrollment', error: err });
+      console.error('Error checking group change permission:', err);
+      return res.status(500).json({ message: 'Error checking group change permission', error: err });
     }
 
-    if (results.length > 0) {
-      const updateQuery = `
-        UPDATE enrollments 
-        SET groupID = ? 
-        WHERE studentUsername = ? AND courseID = ? AND sectionID = ? AND semester = ?
-      `;
-
-      db.query(updateQuery, [groupID, studentUsername, courseID, sectionID, semester], (err, result) => {
-        if (err) {
-          console.error('Error updating student group:', err);
-          return res.status(500).json({ message: 'Error updating group', error: err });
-        }
-
-        return res.status(200).json({ message: 'Student group updated successfully!' });
-      });
-    } else {
-      const insertQuery = `
-        INSERT INTO enrollments (studentUsername, courseID, sectionID, semester, groupID)
-        VALUES (?, ?, ?, ?, ?)
-      `;
-
-      db.query(insertQuery, [studentUsername, courseID, sectionID, semester, groupID], (err, result) => {
-        if (err) {
-          console.error('Error adding student to group:', err);
-          return res.status(500).json({ message: 'Error adding student to group', error: err });
-        }
-
-        res.status(201).json({ message: 'Student added to group successfully!' });
-      });
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'Section not found.' });
     }
+
+    const allowGroupChange = results[0].allowGroupChange;
+
+    if (!allowGroupChange) {
+      return res.status(403).json({ message: 'Group change is not allowed for this section.' });
+    }
+
+    const checkQuery = `
+      SELECT groupID 
+      FROM enrollments 
+      WHERE studentUsername = ? AND courseID = ? AND sectionID = ? AND semester = ?
+    `;
+
+    db.query(checkQuery, [studentUsername, courseID, sectionID, semester], (err, results) => {
+      if (err) {
+        console.error('Error checking student enrollment:', err);
+        return res.status(500).json({ message: 'Error checking enrollment', error: err });
+      }
+
+      if (results.length > 0) {
+        const updateQuery = `
+          UPDATE enrollments 
+          SET groupID = ? 
+          WHERE studentUsername = ? AND courseID = ? AND sectionID = ? AND semester = ?
+        `;
+
+        db.query(updateQuery, [groupID, studentUsername, courseID, sectionID, semester], (err, result) => {
+          if (err) {
+            console.error('Error updating student group:', err);
+            return res.status(500).json({ message: 'Error updating group', error: err });
+          }
+
+          return res.status(200).json({ message: 'Student group updated successfully!' });
+        });
+      } else {
+        const insertQuery = `
+          INSERT INTO enrollments (studentUsername, courseID, sectionID, semester, groupID)
+          VALUES (?, ?, ?, ?, ?)
+        `;
+
+        db.query(insertQuery, [studentUsername, courseID, sectionID, semester, groupID], (err, result) => {
+          if (err) {
+            console.error('Error adding student to group:', err);
+            return res.status(500).json({ message: 'Error adding student to group', error: err });
+          }
+
+          res.status(201).json({ message: 'Student added to group successfully!' });
+        });
+      }
+    });
   });
 };
 
@@ -574,7 +596,7 @@ exports.getAverageGoalRatings = (req, res) => {
     FROM assignments a
     LEFT JOIN goals g ON g.assignmentID = a.assignmentID AND g.studentUsername = ?
     LEFT JOIN scores s ON s.assignmentID = a.assignmentID AND s.studentUsername = ?
-    WHERE a.courseID = ? AND a.sectionID = ? AND a.semester = ?
+    WHERE a.courseID = ? AND a.sectionID = ? AND a.semester = ? AND a.published = 1
   `;
 
   db.query(query, [studentUsername, studentUsername, courseID, sectionID, semester], (err, results) => {
@@ -587,7 +609,7 @@ exports.getAverageGoalRatings = (req, res) => {
       assignmentID: row.assignmentID,
       assignmentTitle: row.assignmentTitle,
       goalText: row.goalText || 'Goal not set',
-      averageRating: row.published ? parseFloat(row.score).toFixed(2) : 'Not available',
+      averageRating: row.published ? `${parseFloat(row.score).toFixed(2)} / 5` : 'Not available',
     }));
 
     res.status(200).json({ ratings: response });
