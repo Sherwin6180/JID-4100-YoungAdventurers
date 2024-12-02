@@ -151,7 +151,7 @@ CREATE TABLE goals (
 DROP TABLE IF EXISTS questions;
 
 CREATE TABLE questions (
-  questionID INT AUTO_INCREMENT PRIMARY KEY,
+  questionID INT AUTO_INCREMENT PRIMARY KEY,-- Make questionID the primary key
   assignmentID INT NOT NULL,
   questionText VARCHAR(255) NOT NULL,
   questionType ENUM('rating', 'multiple_choice', 'free_response', 'goal') NOT NULL,
