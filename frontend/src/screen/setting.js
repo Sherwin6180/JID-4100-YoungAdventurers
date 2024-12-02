@@ -24,10 +24,9 @@ const SettingPage = () => {
           <View>
             {/* Dashboard 图标 */}
             <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => navigation.navigate('TeacherDashboard')}
+              style={styles.iconButton } disabled
             >
-              <MaterialIcons name="dashboard" size={30} color="black" />
+              <MaterialIcons name="dashboard" size={30} color="grey" />
             </TouchableOpacity>
 
             {/* Back 图标 */}
