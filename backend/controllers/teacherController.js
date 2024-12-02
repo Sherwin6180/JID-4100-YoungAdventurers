@@ -33,7 +33,7 @@ exports.teachNewCourse = (req, res) => {
         [courseID, semester],
         (err, courseResults) => {
           if (err) {
-            db.query('ROLLBACK', () => {}); // Rollback transaction
+            db.query('ROLLBACK', () => {}); // Rollback transaction, course does not exist
             return res.status(500).json({ message: 'Error checking course', error: err });
           }
 
@@ -44,7 +44,7 @@ exports.teachNewCourse = (req, res) => {
               [courseID, courseTitle, courseDescription, courseType, semester],
               (err) => {
                 if (err) {
-                  db.query('ROLLBACK', () => {}); // Rollback transaction
+                  db.query('ROLLBACK', () => {}); // Rollback transaction, new course cannot be created
                   console.log(err);
                   return res.status(500).json({ message: 'Error creating course', error: err });
                 }
@@ -74,7 +74,7 @@ const insertSectionsAndTeachings = (req, res, courseID, semester, sections, teac
       [courseID, sectionID, semester],
       (err, sectionResults) => {
         if (err) {
-          db.query('ROLLBACK', () => {}); // Rollback transaction
+          db.query('ROLLBACK', () => {}); // Rollback transaction, section cannot be found
           return res.status(500).json({ message: 'Error checking section', error: err });
         }
 
@@ -85,7 +85,7 @@ const insertSectionsAndTeachings = (req, res, courseID, semester, sections, teac
             [sectionID, sectionDescription, courseID, semester],
             (err) => {
               if (err) {
-                db.query('ROLLBACK', () => {}); // Rollback transaction
+                db.query('ROLLBACK', () => {}); // Rollback transaction, new section cannot be created
                 return res.status(500).json({ message: 'Error creating section', error: err });
               }
               // Insert teaching after creating a section
@@ -109,7 +109,7 @@ const insertTeaching = (req, res, teacherUsername, courseID, sectionID, semester
     [teacherUsername, courseID, sectionID, semester],
     (err, teachingResults) => {
       if (err) {
-        db.query('ROLLBACK', () => {}); // Rollback transaction
+        db.query('ROLLBACK', () => {}); // Rollback transaction, combination of teacher and course/section/semester does not exist
         return res.status(500).json({ message: 'Error checking teaching', error: err });
       }
 
@@ -120,7 +120,7 @@ const insertTeaching = (req, res, teacherUsername, courseID, sectionID, semester
           [teacherUsername, courseID, sectionID, semester],
           (err) => {
             if (err) {
-              db.query('ROLLBACK', () => {}); // Rollback transaction
+              db.query('ROLLBACK', () => {}); // Rollback transaction, combination of teacher and course/section/semester cannot be added
               return res.status(500).json({ message: 'Error inserting into teachings', error: err });
             }
 
