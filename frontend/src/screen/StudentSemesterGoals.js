@@ -118,42 +118,44 @@ const StudentSemesterGoals = () => {
         </View>
 
         {/* Main content area */}
-        <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.title}>My Semester Goals</Text>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            <Text style={styles.title}>My Semester Goals</Text>
 
-          {/* Display goals */}
-          {goals.length === 0 ? (
-            <Text style={styles.noGoalsText}>No goals added yet.</Text>
-          ) : (
-            goals.map((goal) => (
-              <View key={goal.assignmentID} style={styles.goalCard}>
-                <Text style={styles.assignmentTitle}>{goal.assignmentTitle}</Text>
+            {/* Display goals */}
+            {goals.length === 0 ? (
+              <Text style={styles.noGoalsText}>No goals added yet.</Text>
+            ) : (
+              goals.map((goal) => (
+                <View key={goal.assignmentID} style={styles.goalCard}>
+                  <Text style={styles.assignmentTitle}>{goal.assignmentTitle}</Text>
 
-                {/* Goal text input for editing */}
-                {editingGoalId === goal.assignmentID ? (
-                  <TextInput
-                    style={styles.goalInput}
-                    value={editedGoalText}
-                    onChangeText={setEditedGoalText}
-                    multiline
-                  />
-                ) : (
-                  <Text style={styles.goalText}>{goal.goalText}</Text>
-                )}
+                  {/* Goal text input for editing */}
+                  {editingGoalId === goal.assignmentID ? (
+                    <TextInput
+                      style={styles.goalInput}
+                      value={editedGoalText}
+                      onChangeText={setEditedGoalText}
+                      multiline
+                    />
+                  ) : (
+                    <Text style={styles.goalText}>{goal.goalText}</Text>
+                  )}
 
-                {/* Edit and Save buttons */}
-                {editingGoalId === goal.assignmentID ? (
-                  <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveGoal(goal.assignmentID)}>
-                    <Text style={styles.saveButtonText}>Save</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity style={styles.editButton} onPress={() => handleEditGoal(goal)}>
-                    <Text style={styles.editButtonText}>Edit</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            ))
-          )}
+                  {/* Edit and Save buttons */}
+                  {editingGoalId === goal.assignmentID ? (
+                    <TouchableOpacity style={styles.saveButton} onPress={() => handleSaveGoal(goal.assignmentID)}>
+                      <Text style={styles.saveButtonText}>Save</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity style={styles.editButton} onPress={() => handleEditGoal(goal)}>
+                      <Text style={styles.editButtonText}>Edit</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))
+            )}
+          </View>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -187,9 +189,12 @@ const styles = StyleSheet.create({
   bottomIcons: {
     marginTop: 'auto',
   },
+  scrollContent: {
+    paddingVertical: 20,
+  },
   content: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 24,

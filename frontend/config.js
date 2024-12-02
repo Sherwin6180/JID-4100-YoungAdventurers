@@ -1,4 +1,4 @@
 const config = {
-    apiUrl: "http://10.0.0.216:3000",
+    apiUrl: "http://143.215.112.71:3000",
 };
 export default config;
