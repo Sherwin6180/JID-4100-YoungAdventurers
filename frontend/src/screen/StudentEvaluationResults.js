@@ -77,21 +77,23 @@ const StudentEvaluationResults = () => {
         </View>
 
         {/* Main content area */}
-        <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.title}>Goal Ratings</Text>
-          {ratings.length === 0 ? (
-            <Text>No ratings available.</Text>
-          ) : (
-            ratings.map((item) => (
-              <View key={item.assignmentID} style={styles.card}>
-                <Text style={styles.assignmentTitle}>{item.assignmentTitle}</Text>
-                <Text style={styles.goalText}>Goal: {item.goalText}</Text>
-                <Text style={styles.averageRating}>
-                  Average Rating: {item.averageRating}
-                </Text>
-              </View>
-            ))
-          )}
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            <Text style={styles.title}>Goal Ratings</Text>
+            {ratings.length === 0 ? (
+              <Text>No ratings available.</Text>
+            ) : (
+              ratings.map((item) => (
+                <View key={item.assignmentID} style={styles.card}>
+                  <Text style={styles.assignmentTitle}>{item.assignmentTitle}</Text>
+                  <Text style={styles.goalText}>Goal: {item.goalText}</Text>
+                  <Text style={styles.averageRating}>
+                    Average Rating: {item.averageRating}
+                  </Text>
+                </View>
+              ))
+            )}
+          </View>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -124,9 +126,12 @@ const styles = StyleSheet.create({
   bottomIcons: {
     marginTop: 'auto',
   },
+  scrollContent: {
+    paddingVertical: 20,
+  },
   content: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 24,

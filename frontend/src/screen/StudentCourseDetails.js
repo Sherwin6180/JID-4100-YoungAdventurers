@@ -121,64 +121,66 @@ const AssignmentList = () => {
         </View>
 
         {/* 主要内容区域 */}
-        <ScrollView contentContainerStyle={styles.content}>
-          <Text style={styles.title}>Assignments</Text>
-          {assignments.length === 0 ? (
-            <Text>No assignments available.</Text>
-          ) : (
-            assignments.map((assignment) => (
-              <View key={assignment.assignmentID}>
-                <TouchableOpacity
-                  style={styles.assignmentCard}
-                  onPress={() => handleAssignmentClick(assignment.assignmentID, username)}
-                >
-                  <Text style={styles.assignmentTitle}>{assignment.assignmentTitle}</Text>
-                  <Text style={styles.assignmentDueDate}>
-                    Due: {new Date(assignment.dueDateTime).toLocaleString()}
-                  </Text>
-                  <Text style={styles.assignmentStatus}>
-                    Status: {assignment.status.replace("_", " ")}
-                  </Text>
-                </TouchableOpacity>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            <Text style={styles.title}>Assignments</Text>
+            {assignments.length === 0 ? (
+              <Text>No assignments available.</Text>
+            ) : (
+              assignments.map((assignment) => (
+                <View key={assignment.assignmentID}>
+                  <TouchableOpacity
+                    style={styles.assignmentCard}
+                    onPress={() => handleAssignmentClick(assignment.assignmentID, username)}
+                  >
+                    <Text style={styles.assignmentTitle}>{assignment.assignmentTitle}</Text>
+                    <Text style={styles.assignmentDueDate}>
+                      Due: {new Date(assignment.dueDateTime).toLocaleString()}
+                    </Text>
+                    <Text style={styles.assignmentStatus}>
+                      Status: {assignment.status.replace("_", " ")}
+                    </Text>
+                  </TouchableOpacity>
 
-                {/* 展开时显示其他组 */}
-                {expandedAssignment === assignment.assignmentID && (
-                  <View style={styles.groupList}>
-                    {otherGroups.map((group) => (
-                      <TouchableOpacity
-                        key={group.groupID} // 从 API 获取的 groupID
-                        style={styles.groupButton}
-                        onPress={() => navigateToAssignmentChoosePerson(assignment.assignmentID, group.groupID)}
-                      >
-                        <Text style={styles.groupButtonText}>{group.groupName}</Text> 
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-              </View>
-            ))
-          )}
+                  {/* 展开时显示其他组 */}
+                  {expandedAssignment === assignment.assignmentID && (
+                    <View style={styles.groupList}>
+                      {otherGroups.map((group) => (
+                        <TouchableOpacity
+                          key={group.groupID} // 从 API 获取的 groupID
+                          style={styles.groupButton}
+                          onPress={() => navigateToAssignmentChoosePerson(assignment.assignmentID, group.groupID)}
+                        >
+                          <Text style={styles.groupButtonText}>{group.groupName}</Text> 
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ))
+            )}
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('StudentSemesterGoals')}
-          >
-            <Text style={styles.buttonText}>My Semester Goals</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => navigation.navigate('StudentSemesterGoals')}
+            >
+              <Text style={styles.buttonText}>My Semester Goals</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('StudentGroups')}
-          >
-            <Text style={styles.buttonText}>My Group</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => navigation.navigate('StudentGroups')}
+            >
+              <Text style={styles.buttonText}>My Group</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('StudentEvaluationResults')}
-          >
-            <Text style={styles.buttonText}>My Evaluation Results</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => navigation.navigate('StudentEvaluationResults')}
+            >
+              <Text style={styles.buttonText}>My Evaluation Results</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -212,9 +214,12 @@ const styles = StyleSheet.create({
   bottomIcons: {
     marginTop: 'auto',
   },
+  scrollContent: {
+    paddingVertical: 20,
+  },
   content: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 24,
