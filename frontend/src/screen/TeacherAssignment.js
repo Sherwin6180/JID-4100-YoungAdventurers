@@ -86,7 +86,7 @@ const TeacherAssignment = () => {
               <MaterialIcons name="dashboard" size={30} color="black" />
             </TouchableOpacity>
 
-            {/* Setting 图标 */}
+            {/* Setting Symbol */}
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => navigation.navigate('setting')}

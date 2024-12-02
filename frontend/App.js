@@ -33,14 +33,14 @@ const App = () => {
   return (
     <NavigationContainer>
       <UserProvider>
-        {/* 设置全屏模式 */}
+        {/* Set Full Screen Model */}
         <StatusBar hidden={true} />
         
         <Stack.Navigator 
           initialRouteName="Login"
           screenOptions={{
             animation: 'none',  // 禁用页面跳转动画
-            headerShown: false  // 不显示顶部导航栏
+            headerShown: false  // Invisible top Navigation
           }}
         >
 
