@@ -28,5 +28,5 @@ We are developing an app to improve the peer evaluation process requested by the
 * Users are currently unable to modify their account security questions and answers.
 # Installation Guide
 https://github.com/Sherwin6180/JID-4100-YoungAdventurers/blob/main/Install_Guide.md
-# Detail Design Document
+# Detailed Design Document
 https://github.com/Sherwin6180/JID-4100-YoungAdventurers/blob/main/Detailed%20Design%20Document.pdf
