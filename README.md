@@ -13,6 +13,11 @@ We are developing an app to improve the peer evaluation process requested by the
 * Page transitions are now visually smooth.
 * The issue of teacher user cannot delete the question which is already been added.
 * The issue of student can be added into several different groups at the same time.
+### Known Issues
+*
+### Software Features
+*
+
 ## v0.4.0
 ### New Features
 * Implemented the front-end UI for the student user group page.
@@ -27,9 +32,7 @@ We are developing an app to improve the peer evaluation process requested by the
 ### Bug Fixes
 * The issue of teacher user cannot delete the question which is already been added.
 * The issue of student can be added into several different groups at the same time.
-### Known Issues
-* If there is a space in the username during registration, it will result in successful registration but cannot login.
-* On the page where the teacher user creates an assignment, the split between the assignment list and the create button is not clear enough.
+
 ## v0.3.0
 ### New Features
 * Implemented the front-end UI for the student dashboard page.
@@ -42,9 +45,7 @@ We are developing an app to improve the peer evaluation process requested by the
 ### Bug Fixes
 * The issue of student users not being able to return to the dashboard after saving an unfinished assignment has been resolved.
 * Page transitions are now visually smooth.
-### Known Issues
-* Sliding the page causes unexpected returns.
-* AWS crashes
+
 ## v0.2.0
 ### New Features
 * Implemented the front-end UI for the dashboard page.
@@ -58,9 +59,7 @@ We are developing an app to improve the peer evaluation process requested by the
 ### Bug Fixes
 * Previously roster view edit page was redirected from the dashboard, now it is redirected from the section detail page.
 * The problem of screen misalignment has been solved.
-### Known Issues
-* Some page transitions are not visually smooth enough.
-* AWS occasionally crashes.
+
 ## v0.1.0
 ### New Features
 * Implemented the front-end UI for the user creation page.
@@ -72,10 +71,7 @@ We are developing an app to improve the peer evaluation process requested by the
 ### Bug Fixes
 * Previously passwords were stored in plaintext, now  they are encrypted.
 * Improved password reset logic, allowing users to create unique security questions to ensure security.
-### Known Issues
-* User enters email and password without validating the formatting.
-* No validation of multiple accounts tied to one email address.
-* The situation where the updated password is identical to the original password has not been taken into consideration.
+
 ## v0.0.0
 ### New Features
 * Implemented a UI flow from assignment screen to form screen and vice versa.
@@ -83,6 +79,4 @@ We are developing an app to improve the peer evaluation process requested by the
 * Created a Node.js backend to connect to the database and provide APIs for task retrievement, question retrieviement, and form submission.
 ### Bug Fixes
 * The status of the task will be updated to "Completed" after the user finishes the form.
-### Known Issues
-* The user currently is not able to save the answers and review them later before submitting.
 
