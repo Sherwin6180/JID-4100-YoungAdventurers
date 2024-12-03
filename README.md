@@ -15,8 +15,19 @@ We are developing an app to improve the peer evaluation process requested by the
 * Page transitions are now visually smooth.
 * The issue of teacher user cannot delete the question which is already been added.
 * The issue of student can be added into several different groups at the same time.
+  
+* **Task Completion Update:** The task status will now automatically update to "Completed" after the user finishes the form.
+* **Enhanced Password Security:** Passwords, which were previously stored in plaintext, are now securely encrypted.
+* **Improved Password Reset Logic:** Users can now create unique security questions to enhance account security.
+* **Roster View Navigation Update:** The Roster View Edit Page is now redirected from the Section Detail Page instead of the Dashboard.
+* **Resolved UI Misalignment:** The issue causing screen misalignment has been fixed.
+* **Assignment Save Issue Resolved:** Student users can now return to the dashboard after saving an unfinished assignment without any issues.
+* **Smooth Page Transitions:** Page transitions have been visually improved for a smoother user experience.
+* **Teacher Question Deletion Fix:** Teacher users can now delete previously added questions without encountering errors.
+* **Group Assignment Issue Resolved:** Students can no longer be added to multiple groups simultaneously.
 ### Known Issues
-*
+* Depending on the phone model, the logout button may appear misaligned.
+* Users are currently unable to modify their account security questions and answers.
 
 ## v0.4.0
 ### New Features
