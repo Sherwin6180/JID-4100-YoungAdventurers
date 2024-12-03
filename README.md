@@ -4,8 +4,8 @@ We are developing an app to improve the peer evaluation process requested by the
 # Release Notes
 ## v1.0
 ### Software Features
-* Users can now register and log in to their accounts using their email address.
-* Users can now change their password in the settings.
+* Users can register and log in to their accounts using their email address.
+* Users can change their password in the settings.
 * Teacher users can create new courses and sections.
 * Teacher users can create and edit assignments, as well as specify whether the assignment includes questions related to student goals.
 * Teacher users can track and view the scores of all students.
