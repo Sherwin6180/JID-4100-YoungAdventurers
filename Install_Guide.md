@@ -37,3 +37,38 @@ Use `npm update {library-name}` to update outdated libraries.
 Occasionally, the Expo will have new updates and may not work well with mobile Expo App. In this case, you might want to run `npx expo install expo@^{version_number}` or `npx expo install expo@latest` to get the latest support.
 4. Backend is not working / Cannot connect to backend
 Make sure you configured your IP address as mentioned above.
+
+## Complete list of dependencies
+All these libraries can be installed via the package manager `npm`, so you don't have to download them manually.
+
+front-end:
+* @expo/metro-runtime
+* @react-native-community/datetimepicker
+* @react-native-picker/picker
+* @react-navigation/native
+* @react-navigation/native-stack
+* @react-navigation/stack
+* expo
+* expo-status-bar
+* likert-react
+* react
+* react-dom
+* react-likert-scale
+* react-native
+* react-native-element-dropdown
+* react-native-gesture-handler
+* react-native-modal-datetime-picker
+* react-native-reanimated
+* react-native-safe-area-context
+* react-native-screens
+* react-native-web
+
+back-end:
+* axios
+* bcrypt
+* body-parser
+* cors
+* dayjs
+* express
+* mysql
+* mysql2
