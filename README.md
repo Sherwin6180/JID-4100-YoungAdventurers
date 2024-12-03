@@ -7,11 +7,12 @@ We are developing an app to improve the peer evaluation process requested by the
 * Users can now register and log in to their accounts using their email address.
 * Users can now change their password in the settings.
 * Teacher users can create new courses and sections.
-* Teacher users can now create and edit assignments, as well as specify whether the assignment includes questions related to student goals.
-* Teacher users can now track and view the scores of all students.
-* Teacher users can now create groups and view the student roster.
-* Student users can now view their scores and set their goals, as well as participate in peer reviews.
-* Student users can now join or leave a group.
+* Teacher users can create and edit assignments, as well as specify whether the assignment includes questions related to student goals.
+* Teacher users can track and view the scores of all students.
+* Teacher users can create groups and view the student roster.
+* Student users can view their scores and set their goals, as well as participate in peer reviews.
+* Student users can view their current and previous courses.
+* Student users can join or leave a group.
 ### Bug Fixes
 * **Task Completion Update:** The task status will now automatically update to "Completed" after the user finishes the form.
 * **Enhanced Password Security:** Passwords, which were previously stored in plaintext, are now securely encrypted.
