@@ -6,16 +6,6 @@ We are developing an app to improve the peer evaluation process requested by the
 ### Software Features
 *
 ### Bug Fixes
-* The status of the task will be updated to "Completed" after the user finishes the form.
-* Previously passwords were stored in plaintext, now  they are encrypted.
-* Improved password reset logic, allowing users to create unique security questions to ensure security.
-* Previously roster view edit page was redirected from the dashboard, now it is redirected from the section detail page.
-* The problem of screen misalignment has been solved.
-* The issue of student users not being able to return to the dashboard after saving an unfinished assignment has been resolved.
-* Page transitions are now visually smooth.
-* The issue of teacher user cannot delete the question which is already been added.
-* The issue of student can be added into several different groups at the same time.
-  
 * **Task Completion Update:** The task status will now automatically update to "Completed" after the user finishes the form.
 * **Enhanced Password Security:** Passwords, which were previously stored in plaintext, are now securely encrypted.
 * **Improved Password Reset Logic:** Users can now create unique security questions to enhance account security.
