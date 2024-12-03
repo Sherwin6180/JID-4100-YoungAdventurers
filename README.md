@@ -3,6 +3,8 @@
 We are developing an app to improve the peer evaluation process requested by the BMED department at Georgia Tech. It provides two key functionalities: real-time evaluation and goal-based evaluation.
 # Release Notes
 ## v1.0
+### Software Features
+*
 ### Bug Fixes
 * The status of the task will be updated to "Completed" after the user finishes the form.
 * Previously passwords were stored in plaintext, now  they are encrypted.
@@ -14,8 +16,6 @@ We are developing an app to improve the peer evaluation process requested by the
 * The issue of teacher user cannot delete the question which is already been added.
 * The issue of student can be added into several different groups at the same time.
 ### Known Issues
-*
-### Software Features
 *
 
 ## v0.4.0
